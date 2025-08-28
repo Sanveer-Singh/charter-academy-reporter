@@ -1,0 +1,103 @@
+
+# Optimized Bug Fix Workflow
+
+## Core Workflow
+**Input**: Bug description → **Analysis** → **Plan** → **Implement** → **QA** → **Review**
+
+## Phase 1: Analysis (@analysis-rules.mdc)
+**Load**: @project-context.mdc#User Roles, @analysis-rules.mdc#Root Cause Analysis
+**Output**: BugAnalysis_YYYYMMDD_HHMM_Description.md
+**State**: RULE_WF_PHASE_ANALYSIS
+
+### Required Analysis
+- **Root Cause**: Exact technical issue (file:line)
+- **Impact**: Affected roles, security/performance risks
+- **Dependencies**: Related components, database impacts
+- **Strategy**: Step-by-step fix approach (no code)
+
+## Phase 2: Planning (@planning-rules.mdc)
+**Load**: @solid-architecture.mdc#SOLID Principles, @security-rules.mdc#OWASP Compliance
+**Output**: BugPlan_YYYYMMDD_HHMM_Description.md
+**State**: RULE_WF_PHASE_PLANNING
+
+### Plan Requirements
+- Architecture approach (@solid-architecture.mdc#Clean Architecture)
+- Security compliance (@security-rules.mdc#Input Validation)
+- Testing strategy (@testing-qa.mdc#Test Coverage)
+- Risk mitigation (@planning-rules.mdc#Risk Assessment)
+
+## Phase 3: Implementation (@implementation-rules.mdc)
+**Load**: @implementation-rules.mdc#Coding Standards, @ux-guidelines.mdc#UI Standards
+**State**: RULE_WF_PHASE_IMPLEMENTATION
+
+### Implementation Standards
+- Follow @implementation-rules.mdc#Naming Standards
+- Use @solid-architecture.mdc#Repository Pattern
+- Implement @security-rules.mdc#Security Patterns
+- Apply @ux-guidelines.mdc#Accessibility Standards
+
+## Phase 4: Quality Assurance (@qa-rules.mdc)
+**Load**: @qa-rules.mdc#Quality Standards, @testing-qa.mdc#Test Requirements
+**State**: RULE_WF_PHASE_QA
+
+### QA Requirements
+- SonarQube compliance (@qa-rules.mdc#Code Quality)
+- Build verification (@testing-qa.mdc#Build Standards)
+- Security testing (@security-rules.mdc#Security Testing)
+- Performance validation (@performance.mdc#Performance Standards)
+
+## Phase 5: Final Review (@review-rules.mdc)
+**Load**: @review-rules.mdc#Review Standards, All previous rules for reference
+**State**: RULE_WF_PHASE_FINAL_REVIEW
+
+### Review Requirements
+- Plan compliance verification
+- Gap identification and correction
+- Final validation against all standards
+
+## Surgical Rule Injection
+
+### Core Rules (Always Available)
+- **@project-context.mdc** - Project vision, requirements, user stories
+- **@workflow-state.mdc** - State management and transitions
+
+### Phase-Specific Rules (Loaded as Needed)
+- **Analysis**: @analysis-rules.mdc#Root Cause Analysis, @analysis-rules.mdc#Impact Assessment
+- **Planning**: @planning-rules.mdc#Strategy Formulation, @solid-architecture.mdc#SOLID Principles
+- **Implementation**: @implementation-rules.mdc#Coding Standards, @ux-guidelines.mdc#UI Standards
+- **QA**: @qa-rules.mdc#Quality Standards, @testing-qa.mdc#Test Requirements
+- **Review**: @review-rules.mdc#Review Standards
+
+### Conditional Rules (Context-Dependent)
+- **UI Changes**: @ux-guidelines.mdc#Design Principles, @css-architecture.mdc#CSS Standards
+- **Database Changes**: @data-db.mdc#Entity Framework, @data-db.mdc#Repository Pattern
+- **Performance Issues**: @performance.mdc#Optimization, @performance.mdc#Caching
+- **Security Issues**: @security-rules.mdc#OWASP Top 10, @security-rules.mdc#Input Validation
+
+## State Management
+**Update**: @workflow-state.mdc before each phase transition
+**Template**: Use @workflow-state.mdc#State Transition Templates
+**History**: Document all phase transitions and decisions
+
+## Success Criteria
+- ✅ Bug completely resolved
+- ✅ All project standards maintained
+- ✅ No new issues introduced
+- ✅ Code quality standards met
+- ✅ User approval at all checkpoints
+
+## Usage Example
+**Bug**: "Login dropdown label displays inside dropdown"
+
+**Phase 1**: Load @analysis-rules.mdc#Root Cause Analysis → Create analysis document
+**Phase 2**: Load @planning-rules.mdc#Strategy Formulation → Create plan document  
+**Phase 3**: Load @implementation-rules.mdc#Coding Standards → Implement fix
+**Phase 4**: Load @qa-rules.mdc#Quality Standards → Quality assurance
+**Phase 5**: Load @review-rules.mdc#Review Standards → Final validation
+
+**Remember**: Use @subsection references for surgical rule injection, update workflow state, and maintain documentation throughout.
+### State File Integrity
+- Keep only ONE workflow active at a time
+- Archive completed workflows by renaming state
+- Never delete historical data
+- Maintain chronological order in history

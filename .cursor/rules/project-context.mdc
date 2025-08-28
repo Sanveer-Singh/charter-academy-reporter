@@ -1,0 +1,140 @@
+
+# Project Context (@project-context.mdc)
+
+## Project Overview (@project-context.mdc#Project Overview)
+- **App Purpose**: Secure web-based reporting tool for admins to view role-specific dashboards and reports from MariaDB Moodle LMS (learning metrics) and WordPress/WooCommerce (sales data). Focus on CPD compliance for real estate/property sectors.
+- **Key Integrations**: Direct read-only DB connections; data linked via Edwiser Bridge Pro (automatic enrollment post-purchase).
+- **Users**: Max 60 total (20 per role); small scale, no hierarchies.
+- **Scope Exclusions**: No AI insights, offline mode, gamification, collaborations, external integrations, or editable data.
+
+## Priority Order (@project-context.mdc#Priority Order)
+1. **Security & Compliance** - OWASP Top 10, audit trails, encryption
+2. **Operational Excellence** - Inventory, orders, distribution, reporting  
+3. **User Experience** - Mobile-first, WCAG 2.1 AA, SB Admin2 theme
+4. **System Performance** - Server-side processing, SonarQube standards
+
+## User Roles (@project-context.mdc#User Roles)
+- **Charter-Admin**: Full system access, reports, approvals
+- **Rebosa-Admin**: Full access to CPD Related information (one category of courses), reports
+- **PPRA-Admin**: Full access to CPD Related information (one category of courses), reports
+- **ALWAYS**: Enforce role-based permissions
+- **NEVER**: Mix role capabilities
+
+## Architecture Requirements (@project-context.mdc#Architecture Requirements)
+- **MUST**: Use clean architecture with clear layers
+- **MUST**: Implement repository pattern for data
+- **MUST**: Keep business logic in service layer
+- **MUST**: Use BaseController for security
+- **NEVER**: Skip architectural patterns
+
+## Technical Standards (@project-context.mdc#Technical Standards)
+- **Framework**: ASP.NET Core with Identity
+- **Database**: Entity Framework Core
+- **UI Theme**: SB Admin2 
+- **CSS**: Modular architecture
+- **Security**: OWASP compliant
+
+## Success Criteria (@project-context.mdc#Success Criteria)
+- Zero security vulnerabilities
+- 100% audit trail coverage
+- < 3 second page loads
+- WCAG 2.1 AA compliant
+- 80%+ code coverage
+
+## What This Is NOT (@project-context.mdc#What This Is NOT)
+- NOT a commercial delivery app
+- NOT focused on speed over security
+- NOT using client-side business logic
+- NOT compromising for convenience
+- NOT skipping compliance needs
+
+## Functional Requirements (@project-context.mdc#Functional Requirements)
+
+### Authentication and User Management (@project-context.mdc#Authentication and User Management)
+- Secure email/password login with email verification.
+- Registration form: Collect name, email, organization, role request (dropdown), ID number, cell phone number, address.
+- Approval workflow: Charter Admins review/approve/reject via in-app queue; email notifications to approvers and registrants.
+- Password recovery: Email-based reset link.
+- Session management: Auto-timeout after 15-30 minutes inactivity.
+- RBAC: Enforce role-specific access (e.g., PPRA cannot see sales data).
+
+### Dashboards and Reporting (@project-context.mdc#Dashboards and Reporting)
+- Role-specific dashboards loaded post-login.
+- Charts: Bar (comparisons), line (trends), pie (breakdowns), funnel (conversion flows).
+- Filters: Date ranges (custom/presets), course categories (CPD via mdl_course_categories), year-based for PPRA CPD cycles.
+- Exports: XLSX/CSV downloads of summarized/raw data, role-restricted.
+- Funnels: End-to-end journey stages (site landing → views → interest → sales → enrollment → course views → completion); calculate drop-off rates.
+- Search: Filter-based search on dashboards (no full-text global search).
+- Report Generation: On-demand chart/data exports; no custom builders.
+
+### Data Handling (@project-context.mdc#Data Handling)
+- Queries: Direct from Moodle (enrollments, completions, views) and WooCommerce (sales, orders).
+- Transformations: Joins on email, user ID, PPRA Number; aggregate by day/week/month/year; filter CPD by category name/ID.
+- PPRA-Specific: Track per-user/per-year CPD (4 allocated courses); highlight recent fourth-course completions (compliance milestone).
+
+### Error Handling (@project-context.mdc#Error Handling)
+- User-friendly alerts (e.g., "DB connection failed—retry later").
+- Logging: Audit key actions (logins, approvals, exports).
+
+## Non-Functional Requirements (@project-context.mdc#Non-Functional Requirements)
+- **Usability**: Intuitive UI with clear CTAs (e.g., prominent "Filter" and "Export" buttons); mobile-responsive design; WCAG 2.1 compliance (e.g., alt text, keyboard nav).
+- **Security**: POPI compliance (data minimization, encryption at rest/transit via HTTPS/TLS); no PII anonymization needed; role-based data access; audit logs.
+- **Performance**: Page loads <2 seconds; handle 100 concurrent users (low expected load).
+- **Reliability**: 99% uptime target; basic error alerts (no fallback data).
+- **Scalability**: N/A (static max users); no auto-scaling.
+- **Accessibility**: Multi-device support; English-only.
+- **Maintainability**: Full documentation (user guide, code docs, deployment guide); unit tests for core logic.
+- **Compliance**: POPI for data handling; no other standards (e.g., GDPR not required).
+
+## User Stories (@project-context.mdc#User Stories)
+
+### Authentication and Registration (@project-context.mdc#Authentication and Registration)
+1. **As a potential user, I want to register with required fields so that I can request access.** (High)
+   - Acceptance Criteria:
+     - Positive: Form validates inputs (e.g., valid email); submits data; sends confirmation email; adds to approval queue.
+     - Negative: Invalid inputs (e.g., duplicate email) show errors; unconfirmed email blocks submission; form rejects if fields missing.
+
+2. **As a Charter Admin, I want to approve/reject registrations via a queue so that I can control access.** (High)
+   - Acceptance Criteria:
+     - Positive: View pending list with details; approve sends welcome email and grants access; reject sends rejection email.
+     - Negative: No pending items shows empty queue message; attempting to approve invalid entry logs error; non-Charter roles cannot access queue (redirect/alert).
+
+### Dashboards and Reporting (@project-context.mdc#Dashboards and Reporting)
+3. **As an admin, I want to view role-specific dashboards so that I can see relevant data.** (High)
+   - Acceptance Criteria:
+     - Positive: Dashboard loads with role-appropriate charts and data; filters work correctly; exports generate properly formatted files.
+     - Negative: Unauthorized data not visible; invalid filters show appropriate errors; failed exports show user-friendly messages.
+
+### Error and Edge Cases (@project-context.mdc#Error and Edge Cases)
+4. **As a user, I want clear error messages so that I understand what went wrong.** (Medium)
+   - Acceptance Criteria:
+     - Positive: Errors show in user-friendly language; suggest next steps; log technical details for debugging.
+     - Negative: No technical jargon; no stack traces; no generic "something went wrong" messages.
+
+## Tech Stack and Architecture (@project-context.mdc#Tech Stack and Architecture)
+- **Frontend**: ASP.NET Core MVC with Razor views, SB Admin2 theme, responsive CSS
+- **Backend**: ASP.NET Core with Identity, Entity Framework Core, repository pattern
+- **Database**: MariaDB (Moodle LMS), MySQL (WooCommerce), read-only connections
+- **Security**: OWASP Top 10 compliance, role-based access control, audit logging
+- **Performance**: Server-side processing, async operations, query optimization
+
+## Data Model and Integration (@project-context.mdc#Data Model and Integration)
+- **Moodle Integration**: mdl_user, mdl_course, mdl_enrol, mdl_completion tables
+- **WooCommerce Integration**: wp_users, wp_posts, wp_postmeta tables
+- **CPD Tracking**: PPRA number linking, course category filtering, year-based cycles
+- **Data Joins**: Email-based user linking, role-based data filtering
+
+## Deployment and Maintenance (@project-context.mdc#Deployment and Maintenance)
+- **Hosting**: Azure App Service or similar cloud hosting
+- **Database**: Managed database services with read-only access
+- **Security**: SSL certificates, firewall rules, regular security updates
+- **Monitoring**: Application insights, error logging, performance monitoring
+
+## UI/UX Guidelines (@project-context.mdc#UI/UX Guidelines)
+- **Design Principles**: Clean, professional, government-grade appearance
+- **Color Scheme**: SB Admin2 theme colors with high contrast for accessibility
+- **Call-to-Actions**: Prominent buttons for primary actions (Filter, Export, Approve)
+- **Responsive Design**: Mobile-first approach with tablet and desktop optimization
+- **Accessibility**: WCAG 2.1 AA compliance, keyboard navigation, screen reader support
+
+**Reference**: Use @subsection references for surgical rule injection (e.g., @project-context.mdc#User Roles for role-specific requirements).

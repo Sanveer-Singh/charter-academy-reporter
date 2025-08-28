@@ -1,0 +1,486 @@
+---
+description: Performance optimization guidelines for server-side processing and frontend efficiency
+alwaysApply: false
+---
+
+# Performance Optimization Rules
+
+## Server-Side Performance
+
+### Async/Await Best Practices
+```csharp
+// Always use async for I/O operations
+public async Task<IActionResult> GetOrdersAsync()
+{
+    // Good - non-blocking I/O
+    var orders = await _orderService.GetOrdersAsync();
+    return Ok(orders);
+}
+
+// Avoid blocking async code
+// BAD
+public IActionResult GetOrders()
+{
+    var orders = _orderService.GetOrdersAsync().Result; // Blocks thread
+    return Ok(orders);
+}
+
+// Parallel processing when appropriate
+public async Task ProcessMultipleOrdersAsync(List<int> orderIds)
+{
+    var tasks = orderIds.Select(id => ProcessOrderAsync(id));
+    await Task.WhenAll(tasks); // Process all in parallel
+}
+
+// Use ConfigureAwait(false) in library code
+public async Task<Order> GetOrderInternalAsync(int id)
+{
+    return await _context.Orders
+        .FirstOrDefaultAsync(o => o.Id == id)
+        .ConfigureAwait(false); // Don't capture context
+}
+```
+
+### Caching Strategies
+
+#### In-Memory Caching
+```csharp
+public class CachedOrderService : IOrderService
+{
+    private readonly IMemoryCache _cache;
+    private readonly IOrderService _orderService;
+    
+    public async Task<List<Order>> GetRecentOrdersAsync()
+    {
+        return await _cache.GetOrCreateAsync(
+            "recent_orders",
+            async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+                entry.SlidingExpiration = TimeSpan.FromMinutes(2);
+                
+                return await _orderService.GetRecentOrdersAsync();
+            });
+    }
+    
+    public async Task InvalidateOrdersCacheAsync()
+    {
+        _cache.Remove("recent_orders");
+    }
+}
+```
+
+#### Distributed Caching
+```csharp
+public class DistributedOrderCache
+{
+    private readonly IDistributedCache _cache;
+    
+    public async Task<Order> GetOrderAsync(int orderId)
+    {
+        var key = $"order_{orderId}";
+        var cached = await _cache.GetStringAsync(key);
+        
+        if (cached != null)
+        {
+            return JsonSerializer.Deserialize<Order>(cached);
+        }
+        
+        return null;
+    }
+    
+    public async Task SetOrderAsync(Order order)
+    {
+        var key = $"order_{order.Id}";
+        var json = JsonSerializer.Serialize(order);
+        
+        await _cache.SetStringAsync(key, json, new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+        });
+    }
+}
+```
+
+### Database Query Optimization
+
+#### Query Performance
+```csharp
+// Use AsNoTracking for read-only queries
+public async Task<List<OrderDto>> GetOrderSummariesAsync()
+{
+    return await _context.Orders
+        .AsNoTracking() // No change tracking overhead
+        .Where(o => o.Status == OrderStatus.Completed)
+        .Select(o => new OrderDto // Project only needed fields
+        {
+            Id = o.Id,
+            OrderNumber = o.OrderNumber,
+            Total = o.TotalAmount
+        })
+        .ToListAsync();
+}
+
+// Compile queries for frequently used operations
+private static readonly Func<ApplicationDbContext, string, Task<User>> GetUserByEmail =
+    EF.CompileAsyncQuery((ApplicationDbContext context, string email) =>
+        context.Users.FirstOrDefault(u => u.Email == email));
+
+public async Task<User> GetUserByEmailAsync(string email)
+{
+    return await GetUserByEmail(_context, email);
+}
+```
+
+#### Batch Operations
+```csharp
+// Batch inserts
+public async Task AddOrderItemsAsync(List<OrderItem> items)
+{
+    // BAD - Multiple round trips
+    foreach (var item in items)
+    {
+        _context.OrderItems.Add(item);
+        await _context.SaveChangesAsync();
+    }
+    
+    // GOOD - Single round trip
+    _context.OrderItems.AddRange(items);
+    await _context.SaveChangesAsync();
+}
+
+// Batch updates using raw SQL
+public async Task UpdateInventoryQuantitiesAsync(Dictionary<int, int> updates)
+{
+    var sql = @"
+        UPDATE InventoryItems 
+        SET Quantity = Quantity - @quantity 
+        WHERE Id = @id AND Quantity >= @quantity";
+    
+    foreach (var update in updates)
+    {
+        await _context.Database.ExecuteSqlRawAsync(sql,
+            new SqlParameter("@id", update.Key),
+            new SqlParameter("@quantity", update.Value));
+    }
+}
+```
+
+### Background Processing
+
+#### Hosted Services
+```csharp
+public class OrderProcessingService : BackgroundService
+{
+    private readonly IServiceProvider _serviceProvider;
+    
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
+            
+            await ProcessPendingOrdersAsync(orderService);
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+        }
+    }
+    
+    private async Task ProcessPendingOrdersAsync(IOrderService orderService)
+    {
+        var pendingOrders = await orderService.GetPendingOrdersAsync();
+        
+        // Process in parallel with limited concurrency
+        var semaphore = new SemaphoreSlim(5); // Max 5 concurrent
+        var tasks = pendingOrders.Select(async order =>
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                await orderService.ProcessOrderAsync(order.Id);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+        
+        await Task.WhenAll(tasks);
+    }
+}
+```
+
+#### Queue Processing
+```csharp
+public class QueuedOrderProcessor
+{
+    private readonly Channel<OrderProcessingItem> _queue;
+    
+    public QueuedOrderProcessor()
+    {
+        _queue = Channel.CreateUnbounded<OrderProcessingItem>();
+    }
+    
+    public async Task EnqueueOrderAsync(OrderProcessingItem item)
+    {
+        await _queue.Writer.WriteAsync(item);
+    }
+    
+    public async Task ProcessQueueAsync(CancellationToken cancellationToken)
+    {
+        await foreach (var item in _queue.Reader.ReadAllAsync(cancellationToken))
+        {
+            await ProcessOrderItemAsync(item);
+        }
+    }
+}
+```
+
+## Frontend Performance
+
+### HTTP Request Optimization
+```javascript
+// Batch API calls
+async function loadDashboardData() {
+    // BAD - Sequential calls
+    const orders = await fetch('/api/orders');
+    const inventory = await fetch('/api/inventory');
+    const users = await fetch('/api/users');
+    
+    // GOOD - Parallel calls
+    const [orders, inventory, users] = await Promise.all([
+        fetch('/api/orders'),
+        fetch('/api/inventory'),
+        fetch('/api/users')
+    ]);
+}
+
+// Use HTTP caching headers
+fetch('/api/static-data', {
+    headers: {
+        'If-None-Match': etag,
+        'Cache-Control': 'max-age=3600'
+    }
+});
+```
+
+### Lazy Loading
+```javascript
+// Lazy load components
+const OrderDetails = () => import('./OrderDetails.js');
+
+// Intersection Observer for lazy loading
+const lazyLoadImages = () => {
+    const images = document.querySelectorAll('img[data-src]');
+    
+    const imageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+                imageObserver.unobserve(img);
+            }
+        });
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
+};
+```
+
+### Debouncing and Throttling
+```javascript
+// Debounce search input
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+const searchInput = document.getElementById('search');
+searchInput.addEventListener('input', debounce(async (e) => {
+    const results = await searchOrders(e.target.value);
+    displayResults(results);
+}, 300));
+
+// Throttle scroll events
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
+
+window.addEventListener('scroll', throttle(() => {
+    updateScrollPosition();
+}, 100));
+```
+
+## Response Compression
+
+### Server-Side Compression
+```csharp
+// Configure in Startup.cs
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddResponseCompression(options =>
+    {
+        options.EnableForHttps = true;
+        options.Providers.Add<BrotliCompressionProvider>();
+        options.Providers.Add<GzipCompressionProvider>();
+    });
+    
+    services.Configure<BrotliCompressionProviderOptions>(options =>
+    {
+        options.Level = CompressionLevel.Optimal;
+    });
+}
+
+public void Configure(IApplicationBuilder app)
+{
+    app.UseResponseCompression();
+    // Other middleware
+}
+```
+
+### Static Asset Optimization
+```html
+<!-- Bundle and minify CSS/JS -->
+<environment include="Production">
+    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+    <script src="~/js/site.min.js" asp-append-version="true"></script>
+</environment>
+
+<!-- Preload critical resources -->
+<link rel="preload" href="/css/critical.css" as="style">
+<link rel="preload" href="/fonts/main.woff2" as="font" type="font/woff2" crossorigin>
+
+<!-- Lazy load non-critical CSS -->
+<link rel="preload" href="/css/non-critical.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+```
+
+## Monitoring and Profiling
+
+### Performance Metrics
+```csharp
+public class PerformanceMetricsMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<PerformanceMetricsMiddleware> _logger;
+    
+    public async Task InvokeAsync(HttpContext context)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        
+        try
+        {
+            await _next(context);
+        }
+        finally
+        {
+            stopwatch.Stop();
+            
+            if (stopwatch.ElapsedMilliseconds > 1000)
+            {
+                _logger.LogWarning(
+                    "Slow request: {Method} {Path} took {ElapsedMs}ms",
+                    context.Request.Method,
+                    context.Request.Path,
+                    stopwatch.ElapsedMilliseconds);
+            }
+        }
+    }
+}
+```
+
+### Application Insights
+```csharp
+// Track custom metrics
+public class OrderService
+{
+    private readonly TelemetryClient _telemetryClient;
+    
+    public async Task<Order> ProcessOrderAsync(int orderId)
+    {
+        using var operation = _telemetryClient.StartOperation<DependencyTelemetry>("ProcessOrder");
+        
+        try
+        {
+            var order = await GetOrderAsync(orderId);
+            var result = await ProcessOrderInternalAsync(order);
+            
+            _telemetryClient.TrackMetric("OrderProcessingTime", 
+                operation.Telemetry.Duration.TotalMilliseconds);
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _telemetryClient.TrackException(ex);
+            throw;
+        }
+    }
+}
+```
+
+## Memory Management
+
+### Object Pooling
+```csharp
+public class StringBuilderPool
+{
+    private readonly ObjectPool<StringBuilder> _pool;
+    
+    public StringBuilderPool()
+    {
+        var provider = new DefaultObjectPoolProvider();
+        _pool = provider.Create<StringBuilder>();
+    }
+    
+    public StringBuilder Get() => _pool.Get();
+    public void Return(StringBuilder sb)
+    {
+        sb.Clear();
+        _pool.Return(sb);
+    }
+}
+```
+
+### Dispose Patterns
+```csharp
+public class ResourceIntensiveService : IDisposable
+{
+    private readonly MemoryStream _stream;
+    private bool _disposed;
+    
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+    
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _stream?.Dispose();
+            }
+            _disposed = true;
+        }
+    }
+}
+```

@@ -1,0 +1,152 @@
+# Consolidated Bug-Fix Rules
+
+## Core Standards (All Phases)
+
+### Security & Compliance (@security-rules.mdc)
+- **OWASP Top 10**: Input validation, XSS prevention, CSRF protection
+- **Authentication**: Role-based access control, session management
+- **Data Protection**: Encryption at rest/transit, audit logging
+- **Input Validation**: Server-side validation, parameterized queries
+
+### Architecture Patterns (@solid-architecture.mdc)
+- **SOLID Principles**: Single responsibility, open/closed, dependency inversion
+- **Clean Architecture**: Controller → Service → Repository → Data
+- **Repository Pattern**: Data access abstraction, async operations
+- **Dependency Injection**: Constructor injection, service registration
+
+### Code Quality (@implementation-rules.mdc)
+- **Naming**: PascalCase methods, camelCase variables, I-prefix interfaces
+- **Structure**: Single responsibility, early returns, null safety
+- **Error Handling**: Try-catch blocks, logging, user-friendly messages
+- **Performance**: Async/await, caching, query optimization
+
+## Phase-Specific Rules
+
+### Analysis Phase (@analysis-rules.mdc)
+**Required Actions**:
+- Update @workflow-state.mdc to RULE_WF_PHASE_ANALYSIS
+- Create BugAnalysis_YYYYMMDD_HHMM_Description.md
+- Identify root cause (file:line), impacts, dependencies
+- Document fix strategy (no code)
+
+**Quality Checklist**:
+- Root cause verified and reproducible
+- All affected roles identified
+- Security/performance risks assessed
+- Dependencies mapped completely
+
+### Planning Phase (@planning-rules.mdc)
+**Required Actions**:
+- Update @workflow-state.mdc to RULE_WF_PHASE_PLANNING
+- Create BugPlan_YYYYMMDD_HHMM_Description.md
+- Define architecture approach and security compliance
+- Outline testing strategy and risk mitigation
+
+**Compliance Requirements**:
+- Follow @solid-architecture.mdc#Clean Architecture
+- Implement @security-rules.mdc#Security Patterns
+- Plan @testing-qa.mdc#Test Coverage
+- Address @planning-rules.mdc#Risk Assessment
+
+### Implementation Phase (@implementation-rules.mdc)
+**Required Actions**:
+- Update @workflow-state.mdc to RULE_WF_PHASE_IMPLEMENTATION
+- Follow approved plan exactly
+- Implement with @implementation-rules.mdc#Coding Standards
+- Use @solid-architecture.mdc#Repository Pattern
+
+**Implementation Standards**:
+- Controllers thin, services handle logic
+- All inputs validated server-side
+- Parameterized queries only
+- Repository pattern for data access
+
+### QA Phase (@qa-rules.mdc)
+**Required Actions**:
+- Update @workflow-state.mdc to RULE_WF_PHASE_QA
+- SonarQube compliance verification
+- Build verification and testing
+- Security and performance validation
+
+**Quality Standards**:
+- Code quality meets @qa-rules.mdc#SonarQube Standards
+- Build passes all tests (@testing-qa.mdc#Build Standards)
+- Security testing completed (@security-rules.mdc#Security Testing)
+- Performance validated (@performance.mdc#Performance Standards)
+
+### Review Phase (@review-rules.mdc)
+**Required Actions**:
+- Update @workflow-state.mdc to RULE_WF_PHASE_FINAL_REVIEW
+- Verify plan compliance
+- Identify and fix any gaps
+- Final validation against all standards
+
+**Review Requirements**:
+- All plan steps completed
+- Bug fully resolved
+- Quality standards met
+- No new issues introduced
+
+## Context-Dependent Rules
+
+### UI/UX Changes
+**Load**: @ux-guidelines.mdc#Design Principles, @css-architecture.mdc#CSS Standards
+**Standards**:
+- Mobile-first responsive design
+- WCAG 2.1 AA compliance
+- BEM methodology for CSS
+- Consistent with SB Admin2 theme
+
+### Database Changes
+**Load**: @data-db.mdc#Entity Framework, @data-db.mdc#Repository Pattern
+**Standards**:
+- Entity Framework Core patterns
+- Repository abstraction layer
+- Async operations for all queries
+- Transaction management for multi-step operations
+
+### Performance Issues
+**Load**: @performance.mdc#Optimization, @performance.mdc#Caching
+**Standards**:
+- Query optimization and indexing
+- Caching strategies
+- Async/await patterns
+- Performance monitoring
+
+## Surgical Rule Injection Examples
+
+### For Login Bug Fix
+```
+Load: @consolidated-rules.mdc#Analysis Phase, @consolidated-rules.mdc#UI/UX Changes
+Reference: @project-context.mdc#User Roles, @project-context.mdc#Authentication Requirements
+```
+
+### For Database Bug Fix
+```
+Load: @consolidated-rules.mdc#Analysis Phase, @consolidated-rules.mdc#Database Changes
+Reference: @project-context.mdc#Data Model, @project-context.mdc#Architecture Requirements
+```
+
+### For Security Bug Fix
+```
+Load: @consolidated-rules.mdc#Analysis Phase, @consolidated-rules.mdc#Security & Compliance
+Reference: @project-context.mdc#Security Priorities, @project-context.mdc#Compliance Requirements
+```
+
+## State Management
+**Always Update**: @workflow-state.mdc before phase transitions
+**Use Templates**: @workflow-state.mdc#State Transition Templates
+**Document History**: All decisions and transitions
+
+## Success Criteria
+- ✅ Bug completely resolved
+- ✅ All project standards maintained
+- ✅ No new issues introduced
+- ✅ Code quality standards met
+- ✅ User approval at all checkpoints
+
+**Remember**: Use @subsection references for surgical rule injection, maintain workflow state, and follow phase-specific requirements.
+description:
+globs:
+alwaysApply: true
+---

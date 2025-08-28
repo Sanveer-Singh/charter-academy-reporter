@@ -1,0 +1,136 @@
+---
+description: Mandatory coding standards for implementation phase
+alwaysApply: false
+---
+
+# Implementation Phase Rules
+
+## Critical Rules
+
+### RULE 1: Naming Standards
+- **MUST**: Use PascalCase for methods, camelCase for variables
+- **MUST**: Prefix interfaces with 'I', private fields with '_'
+- **MUST**: Use UPPER_CASE for constants
+- **NEVER**: Use magic strings - create constants/enums
+- **NEVER**: Use abbreviations or unclear names
+
+### RULE 2: Code Structure
+- **MUST**: One responsibility per method
+- **MUST**: Use early returns for clarity
+- **MUST**: Implement null safety checks
+- **ALWAYS**: Use helper methods for subtasks
+- **NEVER**: Create methods longer than 20 lines
+
+### RULE 3: Controller Implementation
+- **MUST**: Keep controllers thin - delegate to services
+- **MUST**: Use BaseController for security validation
+- **MUST**: Return proper HTTP status codes
+- **ALWAYS**: Use async/await for I/O operations
+- **NEVER**: Put business logic in controllers
+
+### RULE 4: Service Layer
+- **MUST**: All business logic in service layer
+- **MUST**: Use dependency injection for dependencies
+- **MUST**: Return meaningful result objects
+- **ALWAYS**: Implement proper logging
+- **NEVER**: Access database directly from services
+
+### RULE 5: Security Implementation
+- **MUST**: Validate ALL inputs server-side
+- **MUST**: Use parameterized queries ONLY
+- **MUST**: Encode output to prevent XSS
+- **ALWAYS**: Use SecurityValidationService
+- **NEVER**: Concatenate SQL strings
+- **NEVER**: Trust client-side validation
+
+### RULE 6: Database Access
+- **MUST**: Use repository pattern
+- **MUST**: Use async operations for all queries
+- **MUST**: Include related data to prevent N+1
+- **ALWAYS**: Use transactions for multi-step operations
+- **NEVER**: Use .Result or .Wait() on async calls
+
+### RULE 7: Frontend Standards
+- **MUST**: Mobile-first responsive design
+- **MUST**: Use relative units (rem, %, em)
+- **MUST**: Follow BEM methodology for CSS
+- **ALWAYS**: Use CSS variables for theming
+- **NEVER**: Use absolute pixels for layout
+
+### RULE 8: Accessibility
+- **MUST**: Semantic HTML structure
+- **MUST**: ARIA labels for interactive elements
+- **MUST**: 4.5:1 contrast ratio for text
+- **ALWAYS**: Keyboard navigation support
+- **NEVER**: Rely on color alone for meaning
+
+### RULE 9: Performance
+- **MUST**: Use async/await properly
+- **MUST**: Implement caching for repeated data
+- **MUST**: Optimize database queries
+- **ALWAYS**: Use AsNoTracking() for read-only
+- **NEVER**: Load unnecessary data
+
+### RULE 10: Code Cleanup
+- **MUST**: Remove all commented code
+- **MUST**: Delete unused imports
+- **MUST**: Remove debug statements
+- **MUST**: Deprecate replaced code
+- **NEVER**: Leave TODO comments
+
+### RULE 11: Error Handling
+- **MUST**: Use try-catch for external calls
+- **MUST**: Log errors with context
+- **MUST**: Return user-friendly messages
+- **ALWAYS**: Use GlobalExceptionHandlingMiddleware
+- **NEVER**: Expose stack traces to users
+
+### RULE 12: Component Reusability
+- **MUST**: Check for existing implementations first
+- **MUST**: Create reusable partials for repeated UI
+- **MUST**: Use generic components where applicable
+- **ALWAYS**: Follow DRY principle
+- **NEVER**: Duplicate existing functionality
+
+## Implementation Checklist
+✓ Naming conventions followed
+✓ Controllers thin, services handle logic
+✓ All inputs validated server-side
+✓ Parameterized queries used
+✓ Repository pattern implemented
+✓ Async/await used correctly
+✓ Mobile-first CSS
+✓ Accessibility standards met
+✓ Error handling implemented
+✓ Code reusability maximized
+✓ Code cleaned up
+✓ Performance optimized
+
+## Security Quick Reference
+```csharp
+// ALWAYS
+await _context.Orders.Where(o => o.Id == id).ToListAsync();
+
+// NEVER
+var sql = $"SELECT * FROM Orders WHERE Id = {id}";
+```
+
+## CSS Quick Reference
+```css
+/* ALWAYS */
+.component { padding: 1rem; }
+
+/* NEVER */
+.component { padding: 16px; }
+```
+
+## Error Handling Pattern
+```csharp
+// ALWAYS
+try {
+    await _service.ProcessAsync();
+} catch (Exception ex) {
+    _logger.LogError(ex, "Process failed");
+    return BadRequest("Unable to process request");
+}
+```

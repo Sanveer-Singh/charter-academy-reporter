@@ -1,0 +1,407 @@
+---
+description: Documentation standards for code, APIs, and project maintenance
+alwaysApply: false
+---
+
+# Documentation Standards
+
+## Code Documentation
+
+### XML Documentation for C#
+```csharp
+/// <summary>
+/// Processes a student food order through the approval workflow.
+/// </summary>
+/// <param name="orderId">The unique identifier of the order to process.</param>
+/// <returns>
+/// A task that represents the asynchronous operation. 
+/// The task result contains the processed order with updated status.
+/// </returns>
+/// <exception cref="ArgumentException">
+/// Thrown when orderId is less than or equal to zero.
+/// </exception>
+/// <exception cref="OrderNotFoundException">
+/// Thrown when no order exists with the specified ID.
+/// </exception>
+/// <remarks>
+/// This method performs the following steps:
+/// 1. Validates the order exists and is in pending status
+/// 2. Checks inventory availability
+/// 3. Updates order status to approved or rejected
+/// 4. Sends notification to the student
+/// </remarks>
+/// <example>
+/// <code>
+/// var processedOrder = await orderService.ProcessOrderAsync(123);
+/// if (processedOrder.Status == OrderStatus.Approved)
+/// {
+///     Console.WriteLine("Order approved successfully");
+/// }
+/// </code>
+/// </example>
+public async Task<Order> ProcessOrderAsync(int orderId)
+{
+    if (orderId <= 0)
+        throw new ArgumentException("Order ID must be greater than zero", nameof(orderId));
+        
+    // Implementation
+}
+```
+
+### Method Documentation Guidelines
+```csharp
+/// <summary>
+/// Brief description of what the method does (one sentence).
+/// </summary>
+public void SimpleMethod() { }
+
+/// <summary>
+/// Creates a new inventory item with the specified details.
+/// </summary>
+/// <param name="name">The name of the inventory item. Must not be null or empty.</param>
+/// <param name="quantity">The initial quantity. Must be non-negative.</param>
+/// <param name="category">The category for classification. Optional.</param>
+/// <returns>The created inventory item with generated ID.</returns>
+public InventoryItem CreateItem(string name, int quantity, string category = null) { }
+```
+
+### Property Documentation
+```csharp
+/// <summary>
+/// Gets or sets the unique identifier for the order.
+/// </summary>
+/// <value>
+/// The order identifier assigned by the system upon creation.
+/// </value>
+public int Id { get; set; }
+
+/// <summary>
+/// Gets the current status of the order.
+/// </summary>
+/// <remarks>
+/// Status transitions follow these rules:
+/// - Pending → Approved/Rejected
+/// - Approved → Completed/Cancelled
+/// - Rejected → (terminal state)
+/// </remarks>
+public OrderStatus Status { get; private set; }
+```
+
+### Class Documentation
+```csharp
+/// <summary>
+/// Manages the lifecycle of student food orders from creation to fulfillment.
+/// </summary>
+/// <remarks>
+/// This service implements the core business logic for order processing,
+/// including validation, inventory checking, and status management.
+/// It follows the repository pattern and uses dependency injection
+/// for data access and external services.
+/// </remarks>
+/// <seealso cref="IOrderService"/>
+/// <seealso cref="OrderRepository"/>
+public class OrderService : IOrderService
+{
+    // Implementation
+}
+```
+
+## API Documentation
+
+### Controller Documentation
+```csharp
+/// <summary>
+/// Provides endpoints for managing student food orders.
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+[Produces("application/json")]
+public class OrdersController : ControllerBase
+{
+    /// <summary>
+    /// Gets a paginated list of orders for the authenticated user.
+    /// </summary>
+    /// <param name="page">The page number (1-based). Default is 1.</param>
+    /// <param name="pageSize">The number of items per page. Default is 10, max is 100.</param>
+    /// <returns>A paginated list of orders.</returns>
+    /// <response code="200">Returns the paginated list of orders</response>
+    /// <response code="400">If the page parameters are invalid</response>
+    /// <response code="401">If the user is not authenticated</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<OrderDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetOrders(
+        [FromQuery] int page = 1, 
+        [FromQuery] int pageSize = 10)
+    {
+        // Implementation
+    }
+}
+```
+
+### API Model Documentation
+```csharp
+/// <summary>
+/// Represents a request to create a new order.
+/// </summary>
+public class CreateOrderRequest
+{
+    /// <summary>
+    /// The items to include in the order.
+    /// </summary>
+    /// <example>
+    /// [
+    ///   { "itemId": 1, "quantity": 2 },
+    ///   { "itemId": 3, "quantity": 1 }
+    /// ]
+    /// </example>
+    [Required]
+    [MinLength(1, ErrorMessage = "At least one item is required")]
+    public List<OrderItemRequest> Items { get; set; }
+    
+    /// <summary>
+    /// Optional notes for the order.
+    /// </summary>
+    /// <example>Please deliver to room 203</example>
+    [StringLength(500)]
+    public string Notes { get; set; }
+}
+```
+
+## README Documentation
+
+### Project README Template
+```markdown
+# Food Delivery System
+
+A comprehensive, government-grade food delivery management system for educational institutions.
+
+## Overview
+
+This system manages the entire food delivery lifecycle from inventory management to student order fulfillment, with strict compliance and audit standards.
+
+## Features
+
+- **Inventory Management**: Track food items, expiration dates, and quantities
+- **Order Processing**: Student order creation, approval workflow, and fulfillment
+- **Distribution Events**: Schedule and manage food distribution
+- **Reporting**: Comprehensive dashboards and analytics
+- **Audit Trail**: Complete tracking of all system activities
+
+## Prerequisites
+
+- .NET 6.0 SDK or later
+- Node.js 14.x or later (for frontend tools)
+- SQLite (included) or SQL Server
+
+## Getting Started
+
+### Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/yourorg/fooddeliverysystem.git
+cd fooddeliverysystem
+```
+
+2. Restore dependencies
+```bash
+dotnet restore
+```
+
+3. Update database
+```bash
+dotnet ef database update
+```
+
+4. Run the application
+```bash
+dotnet run
+```
+
+The application will be available at `https://localhost:5001`
+
+### Configuration
+
+Key configuration settings in `appsettings.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=food_delivery.db"
+  },
+  "EmailSettings": {
+    "EnableEmailNotifications": true
+  }
+}
+```
+
+## Architecture
+
+The system follows Clean Architecture principles:
+
+- **Domain Layer**: Core business entities and logic
+- **Application Layer**: Use cases and business workflows  
+- **Infrastructure Layer**: Data access, external services
+- **Presentation Layer**: Web UI and API endpoints
+
+## Development
+
+### Running Tests
+
+```bash
+dotnet test
+```
+
+### Code Quality
+
+Run SonarQube analysis:
+```bash
+dotnet sonarscanner begin /k:"FoodDeliverySystem"
+dotnet build
+dotnet sonarscanner end
+```
+
+## Deployment
+
+### Production Deployment
+
+1. Update connection strings for production database
+2. Set `ASPNETCORE_ENVIRONMENT=Production`
+3. Run database migrations
+4. Deploy to IIS or containerize with Docker
+
+## Security
+
+- OWASP Top 10 compliance
+- Role-based access control
+- Input validation and sanitization
+- Audit logging for all critical operations
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
+```
+
+## Inline Code Comments
+
+### When to Comment
+```csharp
+// Good: Explains WHY, not WHAT
+// We need to check inventory before approval to prevent overselling
+if (await _inventoryService.HasSufficientStockAsync(order.Items))
+{
+    order.Status = OrderStatus.Approved;
+}
+
+// Bad: Explains WHAT (obvious from code)
+// Set status to approved
+order.Status = OrderStatus.Approved;
+
+// Good: Complex business rule
+// Orders placed after 6 PM are processed next business day
+// per university policy UP-2023-45
+if (DateTime.Now.Hour >= 18)
+{
+    order.ProcessingDate = GetNextBusinessDay();
+}
+
+// Good: TODO with context
+// TODO: Implement bulk order optimization when order count > 50
+// Tracked in issue #234
+```
+
+### Comment Standards
+```csharp
+public class OrderProcessor
+{
+    // Constants should explain their significance
+    private const int MaxRetryAttempts = 3; // Based on network reliability SLA
+    
+    public async Task ProcessAsync()
+    {
+        // 1. Section comments for complex methods
+        // Validate order integrity
+        ValidateOrder();
+        
+        // 2. Explain non-obvious decisions
+        // Using optimistic concurrency to handle race conditions
+        // in high-volume scenarios
+        await UpdateWithConcurrencyCheckAsync();
+        
+        // 3. Reference external documentation
+        // See confluence.company.com/order-processing-rules
+        // for detailed business rules
+        ApplyBusinessRules();
+    }
+}
+```
+
+## Maintenance Documentation
+
+### Update Procedures
+```markdown
+## Dependency Update Process
+
+### Monthly Updates
+1. Run `dotnet list package --outdated`
+2. Review breaking changes in release notes
+3. Update non-breaking patch versions
+4. Test thoroughly
+5. Update documentation if needed
+
+### Security Updates
+1. Monitor security advisories
+2. Apply security patches immediately
+3. Test critical paths
+4. Deploy to production within 48 hours
+```
+
+### Troubleshooting Guide
+```markdown
+## Common Issues and Solutions
+
+### Issue: Orders stuck in pending status
+**Symptoms**: Orders remain pending for >30 minutes
+**Cause**: Background service may have stopped
+**Solution**:
+1. Check background service status
+2. Review logs for errors
+3. Restart OrderProcessingService
+4. Verify queue connectivity
+
+### Issue: Slow page load times
+**Symptoms**: Dashboard takes >5 seconds to load
+**Cause**: Missing database indexes
+**Solution**:
+1. Run performance profiler
+2. Check for missing indexes
+3. Add indexes for frequently queried columns
+4. Clear cache if needed
+```
+
+## API Versioning Documentation
+```csharp
+/// <summary>
+/// Order API v2 with enhanced filtering capabilities.
+/// </summary>
+/// <remarks>
+/// Breaking changes from v1:
+/// - Removed 'userId' parameter (now from auth context)
+/// - Changed date format to ISO 8601
+/// - Added pagination by default
+/// 
+/// Migration guide: docs/api/v1-to-v2-migration.md
+/// </remarks>
+[ApiVersion("2.0")]
+[Route("api/v{version:apiVersion}/orders")]
+public class OrdersV2Controller : ControllerBase
+{
+    // Implementation
+}
+```

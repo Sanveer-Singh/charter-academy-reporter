@@ -1,0 +1,170 @@
+---
+description: Activation patterns and triggers for bug fix workflow phases
+alwaysApply: false
+---
+
+# Workflow Trigger Patterns
+
+## Bug Report Detection Patterns
+
+### Direct Bug Reports
+Triggers when user message contains:
+- "fix the [component]"
+- "bug in [location]"
+- "broken [feature]"
+- "[feature] not working"
+- "error when [action]"
+- "issue with [component]"
+- "problem in [area]"
+
+### Implicit Bug Reports
+Triggers when user describes:
+- Unexpected behavior
+- Visual inconsistencies
+- Functional failures
+- Performance issues
+- Security concerns
+
+## Phase Transition Rules
+
+### To RULE_WF_PHASE_ANALYSIS
+**Trigger**: Bug report detected
+**Required Actions**:
+1. Create analysis file in bug-analysis/
+2. Update workflow-state.mdc
+3. Load @project-context.mdc
+4. Load @analysis-rules.mdc
+
+### To RULE_WF_PHASE_PLANNING
+**Trigger**: Analysis approved by user
+**Required Actions**:
+1. Create plan file
+2. Update workflow state
+3. Load @planning-rules.mdc
+4. Load @solid-architecture.mdc
+5. Load @security-rules.mdc
+
+### To RULE_WF_PHASE_IMPLEMENTATION
+**Trigger**: Plan approved by user
+**Required Actions**:
+1. Update workflow state
+2. Load @implementation-rules.mdc
+3. Keep @solid-architecture.mdc
+4. Keep @security-rules.mdc
+
+### To RULE_WF_PHASE_QA
+**Trigger**: Implementation complete
+**Required Actions**:
+1. Update workflow state
+2. Load @qa-rules.mdc
+3. Load @testing-qa.mdc
+4. Run quality checks
+
+### To RULE_WF_PHASE_FINAL_REVIEW
+**Trigger**: QA passed
+**Required Actions**:
+1. Update workflow state
+2. Load @review-rules.mdc
+3. Load all previous phase rules for reference
+
+## Context Loading Strategy
+
+### Minimal Context Loading
+Only load rules needed for current phase:
+
+```yaml
+Phase Analysis:
+  - @project-context.mdc
+  - @analysis-rules.mdc
+
+Phase Planning:
+  - @planning-rules.mdc  
+  - @solid-architecture.mdc
+  - @security-rules.mdc
+
+Phase Implementation:
+  - @implementation-rules.mdc
+  - @solid-architecture.mdc
+  - @security-rules.mdc
+  - @css-architecture.mdc (if UI changes)
+  - @ux-guidelines.mdc (if UI changes)
+
+Phase QA:
+  - @qa-rules.mdc
+  - @testing-qa.mdc
+
+Phase Review:
+  - @review-rules.mdc
+```
+
+### Conditional Rule Loading
+Load based on bug type:
+
+```yaml
+UI/UX Bugs:
+  - @ux-guidelines.mdc
+  - @css-architecture.mdc
+
+Backend Bugs:
+  - @solid-architecture.mdc
+  - @data-db.mdc
+
+Security Bugs:
+  - @security-rules.mdc
+  - @testing-qa.mdc
+
+Performance Bugs:
+  - @performance.mdc
+  - @data-db.mdc
+```
+
+## Workflow State Persistence
+
+### State File Updates
+Always update workflow-state.mdc with:
+- Current phase
+- Timestamp
+- Active agent
+- Questions (if any)
+- Document references
+
+### Document Naming
+- Analysis: `BugAnalysis_YYYYMMDD_HHMM_Description.md`
+- Plan: `BugPlan_YYYYMMDD_HHMM_Description.md`
+- Review: `BugReview_YYYYMMDD_HHMM_Description.md`
+
+## Agent Handoff Protocol
+
+### Information to Preserve
+1. Current workflow phase
+2. Completed phases checklist
+3. Active document paths
+4. Outstanding questions
+5. Any deviations from plan
+
+### Handoff Template
+```markdown
+## Agent Handoff
+**From Agent**: [Name/ID]
+**To Agent**: [Name/ID or Human]
+**Date**: [YYYY-MM-DD HH:MM]
+**Current Phase**: [Phase]
+**Next Steps**: [What needs to be done]
+**Special Notes**: [Any important context]
+```
+
+## Error Recovery
+
+### Workflow Interruption
+If workflow is interrupted:
+1. Check workflow-state.mdc
+2. Identify last completed phase
+3. Load appropriate rules
+4. Continue from checkpoint
+
+### Missing Information
+If critical info is missing:
+1. Set state to RULE_WF_AWAITING_INPUT
+2. Document specific questions
+3. Wait for user response
+4. Resume when info provided

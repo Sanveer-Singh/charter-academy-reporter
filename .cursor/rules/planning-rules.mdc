@@ -1,0 +1,109 @@
+---
+description: Mandatory rules for technical strategy planning phase
+alwaysApply: false
+---
+
+# Technical Strategy Planning Rules
+
+## Critical Rules
+
+### RULE 1: Architecture Compliance
+- **MUST**: Maintain clean layer separation (Models, Services, Controllers, Views)
+- **MUST**: Use repository pattern for ALL data access
+- **MUST**: Keep business logic in service layer ONLY
+- **ALWAYS**: Leverage BaseController security infrastructure
+- **NEVER**: Put business logic in controllers or views
+
+### RULE 2: SOLID Principles Application
+- **MUST**: Each class/method has ONE responsibility
+- **MUST**: Extend functionality without modifying existing code
+- **MUST**: Use dependency injection for ALL dependencies
+- **ALWAYS**: Depend on abstractions, not implementations
+- **NEVER**: Create fat interfaces or god classes
+
+### RULE 3: Security Planning
+- **MUST**: Plan input validation for ALL user inputs
+- **MUST**: Use parameterized queries - NO string concatenation
+- **MUST**: Implement role-based access at UI AND API levels
+- **ALWAYS**: Follow principle of least privilege
+- **NEVER**: Trust client-side validation alone
+
+### RULE 4: Reusability Requirements
+- **MUST**: Search for existing implementations BEFORE creating new
+- **MUST**: Identify components/functions to reuse or extend
+- **MUST**: Document what code will be deprecated
+- **ALWAYS**: Prefer composition over inheritance
+- **NEVER**: Duplicate existing functionality
+
+### RULE 5: Risk Mitigation
+- **MUST**: Identify performance risks and mitigation
+- **MUST**: Address ALL security risks from analysis
+- **MUST**: Plan rollback strategy
+- **ALWAYS**: Consider caching for repeated operations
+- **NEVER**: Ignore identified risks
+
+### RULE 6: Plan Documentation
+- **MUST**: Create plan file `BugPlan_YYYYMMDD_HHMM_Description.md`
+- **MUST**: Include clear implementation steps (NO code)
+- **MUST**: Map each step to specific files/components
+- **ALWAYS**: Reference approved analysis document
+- **NEVER**: Include actual code in planning phase
+
+### RULE 7: Testing Strategy
+- **MUST**: Define unit test approach for new code
+- **MUST**: Identify regression test areas
+- **MUST**: Plan for edge case testing
+- **ALWAYS**: Include security test scenarios
+- **NEVER**: Skip test planning
+
+### RULE 8: UI/UX Planning
+- **MUST**: Plan for WCAG 2.1 AA compliance
+- **MUST**: Design mobile-first responsive approach
+- **MUST**: Maintain SB Admin2 theme consistency
+- **ALWAYS**: Plan keyboard navigation paths
+- **NEVER**: Ignore accessibility requirements
+
+### RULE 9: Documentation Planning
+- **MUST**: Plan XML documentation for public APIs
+- **MUST**: Identify complex logic needing comments
+- **MUST**: Plan README updates if needed
+- **ALWAYS**: Document breaking changes
+- **NEVER**: Leave public methods undocumented
+
+## Planning Quality Checklist
+✓ Clean architecture maintained
+✓ SOLID principles applied to design
+✓ Security measures planned
+✓ Existing code reuse identified
+✓ All risks have mitigation strategies
+✓ Clear step-by-step approach (no code)
+✓ Testing strategy defined
+✓ Rollback plan included
+✓ UI/UX requirements addressed
+✓ Documentation needs identified
+✓ User approval ready
+
+## Architecture Quick Reference
+```
+Controllers → Services → Repositories → Database
+Views ← ViewModels ← Services
+NEVER: Controllers → Database
+NEVER: Views → Services
+```
+
+## Security Planning Essentials
+```
+POST: Strong validation required
+GET: Permissive validation acceptable
+ALL: Server-side validation mandatory
+ALL: Use SecurityValidationService via BaseController
+```
+
+## Risk Categories
+```
+Performance: Caching, async, query optimization
+Security: OWASP Top 10, input validation, auth
+Maintenance: Technical debt, documentation
+Compatibility: Browser support, device testing
+Data: Integrity, migration, backup
+```

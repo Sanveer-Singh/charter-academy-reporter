@@ -1,0 +1,127 @@
+# Optimized Feature Development Workflow
+
+## Core Workflow
+**Input**: User Story/Feature Spec → **Analysis** → **Planning** → **Implementation** → **QA** → **Delivery**
+
+## Phase 1: Feature Analysis (@feature-analysis-rules.mdc)
+**Load**: @project-context.mdc#User Roles, @feature-analysis-rules.mdc#Feature Analysis
+**Output**: FeatureAnalysis_YYYYMMDD_HHMM_FeatureName.md
+**State**: RULE_WF_PHASE_FEATURE_ANALYSIS
+
+### Required Analysis
+- **Affected Users**: Roles and personas impacted
+- **Current State**: Existing behavior/components (if enhancement)
+- **Conventions**: Codebase patterns, architecture decisions
+- **Desired State**: Target behavior with success criteria
+- **Reusability**: Existing components to leverage/enhance
+- **Risks**: Dependencies, complex patterns, security concerns
+- **Deliverables**: Clear analysis document
+
+## Phase 2: Implementation Planning (@feature-planning-rules.mdc)
+**Load**: @solid-architecture.mdc#SOLID Principles, @testing-qa.mdc#Test Requirements, @feature-planning-rules.mdc
+**Output**: FeaturePlan_YYYYMMDD_HHMM_FeatureName.md
+**State**: RULE_WF_PHASE_FEATURE_PLANNING
+
+### Planning Requirements
+- **Test Strategy**: Unit/integration tests based on acceptance criteria
+- **Task Breakdown**: Atomic, implementable tasks
+- **Architecture Plan**: Adherence to SOLID, patterns, constraints
+- **Security Plan**: OWASP compliance, input validation
+- **UI/UX Plan**: Accessibility, responsive design
+- **Risk Mitigation**: Dependency management, rollback strategy
+- **Critical Review**: Scope validation, no feature creep
+
+## Phase 3: Implementation (@feature-implementation-rules.mdc)
+**Load**: @implementation-rules.mdc#Coding Standards, @solid-architecture.mdc, @security-rules.mdc, @ux-guidelines.mdc
+**State**: RULE_WF_PHASE_FEATURE_IMPLEMENTATION
+
+### Implementation Standards
+- Execute planned tasks sequentially
+- Follow @implementation-rules.mdc#Coding Standards
+- Apply @solid-architecture.mdc#Clean Architecture
+- Implement @security-rules.mdc#Security Patterns
+- Clean up deprecated/unused code
+- Ensure successful builds
+- Address SonarScan issues
+
+## Phase 4: Quality Assurance (@feature-qa-rules.mdc)
+**Load**: @qa-rules.mdc#Quality Standards, @testing-qa.mdc#Test Requirements, @feature-qa-rules.mdc
+**State**: RULE_WF_PHASE_FEATURE_QA
+
+### QA Requirements
+- Verify against acceptance criteria
+- Validate implementation matches plan
+- Check architectural compliance
+- Ensure no scope creep
+- Test edge cases
+- Run all test suites
+- Verify performance benchmarks
+
+## Phase 5: Feature Delivery
+**Load**: @review-rules.mdc#Review Standards, @documentation.mdc
+**State**: RULE_WF_PHASE_FEATURE_DELIVERY
+
+### Delivery Requirements
+- Final feature verification
+- Documentation updates
+- User guide updates (if needed)
+- Deployment checklist
+- Feature toggle configuration (if applicable)
+
+## Surgical Rule Injection
+
+### Core Rules (Always Available)
+- **@project-context.mdc** - Project requirements, user stories, constraints
+- **@workflow-state.mdc** - State management for feature workflow
+
+### Phase-Specific Rules (Loaded as Needed)
+- **Analysis**: @feature-analysis-rules.mdc, @solid-architecture.mdc#Architecture Patterns
+- **Planning**: @feature-planning-rules.mdc, @testing-qa.mdc#Test Planning
+- **Implementation**: @feature-implementation-rules.mdc, Conditional UI/Backend rules
+- **QA**: @feature-qa-rules.mdc, @qa-rules.mdc
+- **Delivery**: @documentation.mdc, @review-rules.mdc
+
+### Conditional Rules (Feature-Type Dependent)
+- **UI Features**: @ux-guidelines.mdc, @css-architecture.mdc
+- **API Features**: @security-rules.mdc#API Security, @documentation.mdc#API Docs
+- **Data Features**: @data-db.mdc, @performance.mdc#Query Optimization
+- **Reporting Features**: @performance.mdc, @security-rules.mdc#Data Access
+
+## State Management
+**Update**: @workflow-state.mdc before each phase transition
+**Template**: Use @workflow-state.mdc#Feature State Templates
+**History**: Document all decisions and task completions
+
+## Success Criteria
+- ✅ All acceptance criteria met
+- ✅ Architecture standards maintained
+- ✅ Security requirements satisfied
+- ✅ Performance benchmarks achieved
+- ✅ Test coverage requirements met
+- ✅ No scope creep
+- ✅ Documentation complete
+- ✅ User approval at checkpoints
+
+## Usage Example
+**Feature**: "Add role-based dashboard filtering"
+
+**Phase 1**: Analyze affected roles, current dashboard behavior → Create analysis
+**Phase 2**: Plan test cases, break down into tasks → Create implementation plan
+**Phase 3**: Implement filters, update UI, add tests → Execute plan
+**Phase 4**: Verify functionality, test edge cases → Quality assurance
+**Phase 5**: Update docs, prepare deployment → Feature delivery
+
+## Key Differences from Bug Fix Workflow
+1. **Forward-Looking**: Creating new functionality vs fixing existing
+2. **Test-First**: Tests defined before implementation
+3. **Broader Scope**: Multiple components and user stories
+4. **Architecture Focus**: Heavy emphasis on patterns and reusability
+5. **Documentation**: More extensive documentation requirements
+
+## Anti-Patterns to Avoid
+- ❌ Starting implementation without approved plan
+- ❌ Skipping test planning phase
+- ❌ Adding "nice-to-have" features (scope creep)
+- ❌ Ignoring existing patterns/components
+- ❌ Creating duplicate functionality
+- ❌ Bypassing architectural constraints

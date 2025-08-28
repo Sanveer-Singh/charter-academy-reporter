@@ -1,0 +1,412 @@
+---
+description: Database and data management rules using Entity Framework Core
+alwaysApply: false
+---
+
+# Database & Data Management Rules
+
+## Entity Framework Core Guidelines
+
+### DbContext Configuration
+```csharp
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+{
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        : base(options)
+    {
+    }
+    
+    public DbSet<Order> Orders { get; set; }
+    public DbSet<InventoryItem> InventoryItems { get; set; }
+    public DbSet<DistributionEvent> DistributionEvents { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        
+        // Apply configurations
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        
+        // Global query filters
+        modelBuilder.Entity<Order>().HasQueryFilter(o => !o.IsDeleted);
+    }
+}
+```
+
+### Entity Configuration
+```csharp
+public class OrderConfiguration : IEntityTypeConfiguration<Order>
+{
+    public void Configure(EntityTypeBuilder<Order> builder)
+    {
+        builder.ToTable("Orders");
+        
+        builder.HasKey(o => o.Id);
+        
+        builder.Property(o => o.OrderNumber)
+            .IsRequired()
+            .HasMaxLength(50);
+            
+        builder.Property(o => o.TotalAmount)
+            .HasPrecision(10, 2);
+            
+        builder.HasIndex(o => o.OrderNumber)
+            .IsUnique();
+            
+        builder.HasMany(o => o.Items)
+            .WithOne(i => i.Order)
+            .HasForeignKey(i => i.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+```
+
+## Migration Strategies
+
+### Creating Migrations
+```powershell
+# Add migration with descriptive name
+dotnet ef migrations add AddOrderStatusIndex
+
+# Generate SQL script for review
+dotnet ef migrations script -o migration.sql
+```
+
+### Migration Best Practices
+```csharp
+public partial class AddOrderStatusIndex : Migration
+{
+    protected override void Up(MigrationBuilder migrationBuilder)
+    {
+        // Add index for performance
+        migrationBuilder.CreateIndex(
+            name: "IX_Orders_Status_CreatedDate",
+            table: "Orders",
+            columns: new[] { "Status", "CreatedDate" });
+            
+        // Add data migration if needed
+        migrationBuilder.Sql(@"
+            UPDATE Orders 
+            SET Status = 'Pending' 
+            WHERE Status IS NULL
+        ");
+    }
+    
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropIndex(
+            name: "IX_Orders_Status_CreatedDate",
+            table: "Orders");
+    }
+}
+```
+
+## Query Optimization
+
+### Efficient Loading Patterns
+```csharp
+// Use Include for eager loading
+var ordersWithItems = await _context.Orders
+    .Include(o => o.Items)
+    .ThenInclude(i => i.InventoryItem)
+    .Where(o => o.UserId == userId)
+    .ToListAsync();
+
+// Use projection for read-only data
+var orderSummaries = await _context.Orders
+    .Where(o => o.Status == OrderStatus.Completed)
+    .Select(o => new OrderSummaryDto
+    {
+        Id = o.Id,
+        OrderNumber = o.OrderNumber,
+        Total = o.Items.Sum(i => i.Quantity * i.Price),
+        ItemCount = o.Items.Count()
+    })
+    .ToListAsync();
+
+// Avoid N+1 queries
+// BAD
+foreach (var order in orders)
+{
+    var items = _context.OrderItems.Where(i => i.OrderId == order.Id).ToList();
+}
+
+// GOOD
+var orderIds = orders.Select(o => o.Id).ToList();
+var allItems = await _context.OrderItems
+    .Where(i => orderIds.Contains(i.OrderId))
+    .ToListAsync();
+```
+
+### Pagination
+```csharp
+public async Task<PagedResult<Order>> GetOrdersPagedAsync(int page, int pageSize)
+{
+    var query = _context.Orders.AsQueryable();
+    
+    var total = await query.CountAsync();
+    
+    var items = await query
+        .OrderByDescending(o => o.CreatedDate)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+        
+    return new PagedResult<Order>
+    {
+        Items = items,
+        TotalCount = total,
+        Page = page,
+        PageSize = pageSize
+    };
+}
+```
+
+## Transaction Management
+
+### Using Transactions
+```csharp
+public async Task<bool> ProcessOrderAsync(Order order)
+{
+    using var transaction = await _context.Database.BeginTransactionAsync();
+    
+    try
+    {
+        // Add order
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
+        
+        // Update inventory
+        foreach (var item in order.Items)
+        {
+            var inventory = await _context.InventoryItems
+                .FirstOrDefaultAsync(i => i.Id == item.InventoryItemId);
+                
+            if (inventory.Quantity < item.Quantity)
+            {
+                throw new InsufficientStockException();
+            }
+            
+            inventory.Quantity -= item.Quantity;
+        }
+        
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+        
+        return true;
+    }
+    catch
+    {
+        await transaction.RollbackAsync();
+        throw;
+    }
+}
+```
+
+### Isolation Levels
+```csharp
+// For critical operations
+using var transaction = await _context.Database
+    .BeginTransactionAsync(IsolationLevel.Serializable);
+
+// For read-heavy operations
+using var transaction = await _context.Database
+    .BeginTransactionAsync(IsolationLevel.ReadCommitted);
+```
+
+## Data Validation
+
+### Entity Validation
+```csharp
+public class Order : IValidatableObject
+{
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (Items == null || !Items.Any())
+        {
+            yield return new ValidationResult(
+                "Order must contain at least one item",
+                new[] { nameof(Items) });
+        }
+        
+        if (TotalAmount < 0)
+        {
+            yield return new ValidationResult(
+                "Total amount cannot be negative",
+                new[] { nameof(TotalAmount) });
+        }
+    }
+}
+```
+
+### Database Constraints
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // Check constraints
+    modelBuilder.Entity<InventoryItem>()
+        .HasCheckConstraint("CK_InventoryItem_Quantity", "[Quantity] >= 0");
+        
+    // Unique constraints
+    modelBuilder.Entity<User>()
+        .HasIndex(u => u.Email)
+        .IsUnique();
+        
+    // Default values
+    modelBuilder.Entity<Order>()
+        .Property(o => o.CreatedDate)
+        .HasDefaultValueSql("GETUTCDATE()");
+}
+```
+
+## Audit Logging
+
+### Automatic Audit Trail
+```csharp
+public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+{
+    var auditEntries = new List<AuditEntry>();
+    
+    foreach (var entry in ChangeTracker.Entries())
+    {
+        if (entry.Entity is IAuditable && 
+            (entry.State == EntityState.Added || 
+             entry.State == EntityState.Modified ||
+             entry.State == EntityState.Deleted))
+        {
+            var auditEntry = new AuditEntry
+            {
+                TableName = entry.Entity.GetType().Name,
+                Action = entry.State.ToString(),
+                UserId = _currentUserService.UserId,
+                Timestamp = DateTime.UtcNow,
+                Changes = GetChanges(entry)
+            };
+            
+            auditEntries.Add(auditEntry);
+        }
+    }
+    
+    var result = await base.SaveChangesAsync(cancellationToken);
+    
+    if (auditEntries.Any())
+    {
+        await _auditService.LogAuditEntriesAsync(auditEntries);
+    }
+    
+    return result;
+}
+```
+
+## Connection Management
+
+### Connection Strings
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=food_delivery.db",
+    "AuditConnection": "Data Source=audit.db"
+  }
+}
+```
+
+### Connection Resiliency
+```csharp
+services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(
+        Configuration.GetConnectionString("DefaultConnection"),
+        sqliteOptions => sqliteOptions
+            .CommandTimeout(30))
+    .EnableRetryOnFailure(
+        maxRetryCount: 3,
+        maxRetryDelay: TimeSpan.FromSeconds(5),
+        errorNumbersToAdd: null));
+```
+
+## Performance Monitoring
+
+### Query Logging
+```csharp
+protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+{
+    optionsBuilder
+        .LogTo(Console.WriteLine, LogLevel.Information)
+        .EnableSensitiveDataLogging() // Only in development
+        .EnableDetailedErrors(); // Only in development
+}
+```
+
+### Performance Tracking
+```csharp
+public class PerformanceInterceptor : DbCommandInterceptor
+{
+    public override async Task<DbDataReader> ReaderExecutedAsync(
+        DbCommand command,
+        CommandExecutedEventData eventData,
+        DbDataReader result,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventData.Duration.TotalMilliseconds > 1000)
+        {
+            _logger.LogWarning(
+                "Long running query ({Duration}ms): {Query}",
+                eventData.Duration.TotalMilliseconds,
+                command.CommandText);
+        }
+        
+        return result;
+    }
+}
+```
+
+## Data Seeding
+
+### Initial Data
+```csharp
+public static class DatabaseSeeder
+{
+    public static void SeedData(ApplicationDbContext context)
+    {
+        if (!context.InventoryCategories.Any())
+        {
+            context.InventoryCategories.AddRange(
+                new InventoryCategory { Name = "Fruits", Description = "Fresh fruits" },
+                new InventoryCategory { Name = "Vegetables", Description = "Fresh vegetables" },
+                new InventoryCategory { Name = "Dairy", Description = "Dairy products" }
+            );
+        }
+        
+        if (!context.Roles.Any())
+        {
+            context.Roles.AddRange(
+                new IdentityRole { Name = "Admin", NormalizedName = "ADMIN" },
+                new IdentityRole { Name = "Student", NormalizedName = "STUDENT" },
+                new IdentityRole { Name = "Staff", NormalizedName = "STAFF" }
+            );
+        }
+        
+        context.SaveChanges();
+    }
+}
+```
+
+## Backup and Recovery
+
+### Backup Strategy
+```csharp
+public async Task<string> BackupDatabaseAsync()
+{
+    var backupPath = $"backups/backup_{DateTime.UtcNow:yyyyMMddHHmmss}.db";
+    
+    await using var sourceConnection = new SqliteConnection(_connectionString);
+    await using var backupConnection = new SqliteConnection($"Data Source={backupPath}");
+    
+    await sourceConnection.OpenAsync();
+    await backupConnection.OpenAsync();
+    
+    sourceConnection.BackupDatabase(backupConnection);
+    
+    return backupPath;
+}
+```
