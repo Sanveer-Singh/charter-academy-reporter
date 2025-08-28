@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Charter Reporter App - Login">
+    <title>Login - Charter Reporter</title>
+
+    <!-- Custom fonts for SB Admin 2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- CSS Hierarchy Implementation -->
+    <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="../../wwwroot/css/variables.css" rel="stylesheet">
+    <link href="../../wwwroot/css/site.css" rel="stylesheet">
+    <link href="../../wwwroot/css/modules/authentication.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="row no-gutters">
+                <!-- Left Panel - Login Form -->
+                <div class="col-lg-6">
+                    <div class="auth-form">
+                        <div class="auth-form__header">
+                            <div class="auth-form__logo">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h1 class="auth-form__title">Welcome Back</h1>
+                            <p class="auth-form__subtitle">Sign in to your account to continue</p>
+                        </div>
+
+                        <form class="needs-validation" novalidate>
+                            <input type="hidden" name="__RequestVerificationToken" value="dummy-token" />
+                            
+                            <div class="form-group">
+                                <label for="email" class="form-label">
+                                    Email Address <span class="required-indicator">*</span>
+                                </label>
+                                <div class="input-icon">
+                                    <i class="fas fa-envelope input-icon__icon"></i>
+                                    <input 
+                                        type="email" 
+                                        class="form-control" 
+                                        id="email" 
+                                        name="email"
+                                        placeholder="Enter your email address"
+                                        required
+                                        autocomplete="email"
+                                    >
+                                    <div class="invalid-feedback">
+                                        Please enter a valid email address.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password" class="form-label">
+                                    Password <span class="required-indicator">*</span>
+                                </label>
+                                <div class="input-icon">
+                                    <i class="fas fa-lock input-icon__icon"></i>
+                                    <input 
+                                        type="password" 
+                                        class="form-control" 
+                                        id="password" 
+                                        name="password"
+                                        placeholder="Enter your password"
+                                        required
+                                        autocomplete="current-password"
+                                    >
+                                    <div class="invalid-feedback">
+                                        Password is required.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="rememberMe" name="rememberMe">
+                                    <label class="custom-control-label" for="rememberMe">
+                                        Remember me
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary auth-form__submit">
+                                Sign In
+                            </button>
+
+                            <div class="auth-form__links">
+                                <a href="/account/forgot-password" class="auth-form__link">
+                                    Forgot your password?
+                                </a>
+                            </div>
+
+                            <div class="auth-form__divider">
+                                <span>New to Charter Reporter?</span>
+                            </div>
+
+                            <a href="/account/register" class="btn btn-outline-primary btn-block">
+                                Create an Account
+                            </a>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Info -->
+                <div class="col-lg-6 d-none d-lg-block">
+                    <div class="auth-side-panel">
+                        <h2 class="auth-side-panel__title">Charter Reporter App</h2>
+                        <p class="auth-side-panel__text">
+                            Your comprehensive reporting solution for tracking enrollments, sales, and course completions.
+                        </p>
+                        <ul class="auth-side-panel__features">
+                            <li>Real-time enrollment tracking</li>
+                            <li>Sales analytics dashboard</li>
+                            <li>Course completion reports</li>
+                            <li>Role-based access control</li>
+                            <li>Export data in multiple formats</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../../wwwroot/js/site.js"></script>
+    
+    <script>
+        // Handle login form submission
+        document.querySelector('form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!this.checkValidity()) {
+                e.stopPropagation();
+                this.classList.add('was-validated');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2"></span>Signing in...';
+            submitBtn.disabled = true;
+            
+            // Simulate API call
+            setTimeout(() => {
+                // In real implementation, this would make an AJAX call
+                window.location.href = '/dashboard';
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

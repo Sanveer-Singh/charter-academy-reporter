@@ -1,0 +1,348 @@
+/* Charter Reporter App - Global Site Styles
+   This file contains site-wide overrides to SB Admin 2 theme
+   Using CSS variables defined in variables.css */
+
+/* ========================================
+   Global Resets and Base Styles
+   ======================================== */
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--charter-font-family);
+    color: var(--charter-gray-900);
+    background-color: var(--charter-gray-50);
+}
+
+/* ========================================
+   Override SB Admin 2 Primary Colors
+   ======================================== */
+
+.bg-primary {
+    background-color: var(--charter-primary) !important;
+}
+
+.text-primary {
+    color: var(--charter-primary) !important;
+}
+
+.btn-primary {
+    background-color: var(--charter-primary);
+    border-color: var(--charter-primary);
+    transition: all var(--charter-transition-fast);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--charter-primary-dark);
+    border-color: var(--charter-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--charter-shadow-md);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: var(--charter-shadow-sm);
+}
+
+/* Success Button Override */
+.btn-success {
+    background-color: var(--charter-success);
+    border-color: var(--charter-success);
+}
+
+.btn-success:hover {
+    background-color: color-mix(in srgb, var(--charter-success) 85%, black);
+    border-color: color-mix(in srgb, var(--charter-success) 85%, black);
+}
+
+/* Danger Button Override */
+.btn-danger {
+    background-color: var(--charter-danger);
+    border-color: var(--charter-danger);
+}
+
+.btn-danger:hover {
+    background-color: color-mix(in srgb, var(--charter-danger) 85%, black);
+    border-color: color-mix(in srgb, var(--charter-danger) 85%, black);
+}
+
+/* ========================================
+   Enhanced Card Styles
+   ======================================== */
+
+.card {
+    border: none;
+    box-shadow: var(--charter-shadow-sm);
+    transition: box-shadow var(--charter-transition-base);
+}
+
+.card:hover {
+    box-shadow: var(--charter-shadow-md);
+}
+
+.card-header {
+    background-color: var(--charter-gray-50);
+    border-bottom: 1px solid var(--charter-gray-200);
+}
+
+/* ========================================
+   Table Enhancements
+   ======================================== */
+
+.table {
+    color: var(--charter-gray-700);
+}
+
+.table thead th {
+    background-color: var(--charter-gray-50);
+    border-bottom: 2px solid var(--charter-gray-200);
+    color: var(--charter-gray-900);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--charter-font-size-sm);
+    letter-spacing: 0.05em;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--charter-gray-50);
+}
+
+/* ========================================
+   Form Enhancements
+   ======================================== */
+
+.form-control {
+    border-color: var(--charter-gray-300);
+    transition: border-color var(--charter-transition-fast), box-shadow var(--charter-transition-fast);
+}
+
+.form-control:focus {
+    border-color: var(--charter-primary);
+    box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+}
+
+.form-label {
+    color: var(--charter-gray-700);
+    font-weight: 500;
+    margin-bottom: var(--charter-spacing-xs);
+}
+
+/* Required field indicator */
+.required-indicator {
+    color: var(--charter-danger);
+    font-weight: 600;
+    margin-left: 2px;
+}
+
+/* ========================================
+   Accessibility Enhancements
+   ======================================== */
+
+/* Focus styles */
+:focus-visible {
+    outline: 2px solid var(--charter-primary);
+    outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--charter-primary);
+    color: white;
+    padding: var(--charter-spacing-sm) var(--charter-spacing-md);
+    z-index: var(--charter-z-tooltip);
+    text-decoration: none;
+    border-radius: 0 0 var(--charter-radius-md) 0;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ========================================
+   Loading States
+   ======================================== */
+
+.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--charter-gray-300);
+    border-left-color: var(--charter-primary);
+    border-radius: 50%;
+    animation: spinner 0.75s linear infinite;
+}
+
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: var(--charter-z-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--charter-gray-300);
+    border-left-color: var(--charter-primary);
+    border-radius: 50%;
+    animation: spinner 1s linear infinite;
+}
+
+/* ========================================
+   Alert Modifications
+   ======================================== */
+
+.alert {
+    border: none;
+    border-left: 4px solid;
+    box-shadow: var(--charter-shadow-sm);
+}
+
+.alert-success {
+    background-color: color-mix(in srgb, var(--charter-success) 10%, white);
+    border-left-color: var(--charter-success);
+    color: color-mix(in srgb, var(--charter-success) 80%, black);
+}
+
+.alert-danger {
+    background-color: color-mix(in srgb, var(--charter-danger) 10%, white);
+    border-left-color: var(--charter-danger);
+    color: color-mix(in srgb, var(--charter-danger) 80%, black);
+}
+
+.alert-warning {
+    background-color: color-mix(in srgb, var(--charter-warning) 10%, white);
+    border-left-color: var(--charter-warning);
+    color: color-mix(in srgb, var(--charter-warning) 80%, black);
+}
+
+.alert-info {
+    background-color: color-mix(in srgb, var(--charter-info) 10%, white);
+    border-left-color: var(--charter-info);
+    color: color-mix(in srgb, var(--charter-info) 80%, black);
+}
+
+/* ========================================
+   Badge Modifications
+   ======================================== */
+
+.badge-primary {
+    background-color: var(--charter-primary);
+}
+
+.badge-success {
+    background-color: var(--charter-success);
+}
+
+.badge-danger {
+    background-color: var(--charter-danger);
+}
+
+.badge-warning {
+    background-color: var(--charter-warning);
+}
+
+.badge-info {
+    background-color: var(--charter-info);
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+/* Text utilities */
+.text-muted {
+    color: var(--charter-gray-600) !important;
+}
+
+/* Spacing utilities */
+.space-y-1 > * + * { margin-top: var(--charter-spacing-xs); }
+.space-y-2 > * + * { margin-top: var(--charter-spacing-sm); }
+.space-y-3 > * + * { margin-top: var(--charter-spacing-md); }
+.space-y-4 > * + * { margin-top: var(--charter-spacing-lg); }
+
+/* Shadow utilities */
+.shadow-sm { box-shadow: var(--charter-shadow-sm) !important; }
+.shadow-md { box-shadow: var(--charter-shadow-md) !important; }
+.shadow-lg { box-shadow: var(--charter-shadow-lg) !important; }
+.shadow-xl { box-shadow: var(--charter-shadow-xl) !important; }
+
+/* ========================================
+   Responsive Utilities
+   ======================================== */
+
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+    
+    .container-fluid {
+        padding-left: var(--charter-spacing-sm);
+        padding-right: var(--charter-spacing-sm);
+    }
+    
+    .card {
+        margin-bottom: var(--charter-spacing-md);
+    }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
