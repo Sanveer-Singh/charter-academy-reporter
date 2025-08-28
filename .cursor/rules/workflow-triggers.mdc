@@ -1,5 +1,6 @@
 ---
 description: Activation patterns and triggers for bug fix workflow phases
+globs: ["**/*"]
 alwaysApply: false
 ---
 

@@ -1,5 +1,6 @@
 ---
 description: Mandatory quality assurance standards
+globs: ["**/*"]
 alwaysApply: false
 ---
 

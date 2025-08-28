@@ -1,3 +1,9 @@
+---
+description: Feature quality assurance phase rules for comprehensive testing and validation
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # Feature Quality Assurance Phase Rules
 
 ## Critical Rules

@@ -1,5 +1,6 @@
 ---
 description: Database and data management rules using Entity Framework Core
+globs: ["**/*"]
 alwaysApply: false
 ---
 

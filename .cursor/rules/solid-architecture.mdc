@@ -1,5 +1,6 @@
 ---
 description: Mandatory SOLID principles and clean architecture patterns
+globs: ["**/*"]
 alwaysApply: false
 ---
 

@@ -1,4 +1,10 @@
 
+---
+description: CSS architecture rules for modular hierarchy and SB Admin 2 integration
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # CSS Architecture Rules
 
 ## Critical Rules

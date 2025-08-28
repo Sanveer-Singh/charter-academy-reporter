@@ -1,5 +1,6 @@
 ---
 description: Mandatory rules for technical strategy planning phase
+globs: ["**/*"]
 alwaysApply: false
 ---
 

@@ -1,5 +1,6 @@
 ---
 description: Mandatory final verification and compliance check
+globs: ["**/*"]
 alwaysApply: false
 ---
 

@@ -1,5 +1,6 @@
 ---
 description: Testing and quality assurance standards for comprehensive coverage
+globs: ["**/*"]
 alwaysApply: false
 ---
 

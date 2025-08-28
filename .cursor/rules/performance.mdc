@@ -1,5 +1,6 @@
 ---
 description: Performance optimization guidelines for server-side processing and frontend efficiency
+globs: ["**/*"]
 alwaysApply: false
 ---
 

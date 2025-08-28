@@ -1,3 +1,9 @@
+---
+description: Optimized feature development workflow with test-first approach and surgical rule injection
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # Optimized Feature Development Workflow
 
 ## Core Workflow

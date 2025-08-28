@@ -1,4 +1,10 @@
 
+---
+description: Workflow state management for tracking project phases and handoffs
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # Workflow State Management
 
 ## Current Workflow State

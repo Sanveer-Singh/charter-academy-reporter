@@ -1,5 +1,7 @@
+
 ---
-description: Mandatory rules for bug analysis phase
+description: Bug analysis phase rules for systematic bug investigation and root cause analysis
+globs: ["**/*"]
 alwaysApply: false
 ---
 
@@ -81,6 +83,10 @@ Include: Root Cause | Impacts | Risks | Dependencies | Strategy
 ## Risk Assessment Matrix
 ```
 Security: Auth, Input validation, Data exposure
+Performance: Query optimization, Caching, Async
+Compliance: Audit trail, Data privacy, Regulations
+Operations: Downtime, Data integrity, Rollback
+```
 Performance: Query optimization, Caching, Async
 Compliance: Audit trail, Data privacy, Regulations
 Operations: Downtime, Data integrity, Rollback

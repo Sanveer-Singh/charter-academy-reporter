@@ -1,5 +1,6 @@
 ---
 description: Documentation standards for code, APIs, and project maintenance
+globs: ["**/*"]
 alwaysApply: false
 ---
 

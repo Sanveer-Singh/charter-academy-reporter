@@ -1,4 +1,10 @@
 
+---
+description: Optimized bug fix workflow with surgical rule injection and state management
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # Optimized Bug Fix Workflow
 
 ## Core Workflow

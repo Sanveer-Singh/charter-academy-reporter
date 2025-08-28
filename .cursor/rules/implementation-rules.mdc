@@ -1,5 +1,6 @@
 ---
 description: Mandatory coding standards for implementation phase
+globs: ["**/*"]
 alwaysApply: false
 ---
 

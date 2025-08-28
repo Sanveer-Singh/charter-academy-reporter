@@ -1,4 +1,10 @@
 
+---
+description: Project context and requirements for Charter reporter application
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # Project Context (@project-context.mdc)
 
 ## Project Overview (@project-context.mdc#Project Overview)

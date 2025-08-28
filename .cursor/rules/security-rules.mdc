@@ -1,5 +1,6 @@
 ---
 description: Mandatory security standards and OWASP compliance
+globs: ["**/*"]
 alwaysApply: false
 ---
 

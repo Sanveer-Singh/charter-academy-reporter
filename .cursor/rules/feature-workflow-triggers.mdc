@@ -1,3 +1,9 @@
+---
+description: Feature workflow trigger patterns for automatic workflow activation
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # Feature Workflow Trigger Patterns
 
 ## Feature Request Detection Patterns

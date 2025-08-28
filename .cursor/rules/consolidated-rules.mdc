@@ -1,3 +1,9 @@
+---
+description: Consolidated bug-fix rules with surgical injection patterns
+globs: ["**/*"]
+alwaysApply: true
+---
+
 # Consolidated Bug-Fix Rules
 
 ## Core Standards (All Phases)

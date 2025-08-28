@@ -1,3 +1,9 @@
+---
+description: Feature implementation planning phase rules with test-first approach
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # Feature Implementation Planning Phase Rules
 
 ## Critical Rules

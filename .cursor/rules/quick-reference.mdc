@@ -1,3 +1,9 @@
+---
+description: Quick reference guide for optimized cursor rules with surgical injection examples
+globs: ["**/*"]
+alwaysApply: true
+---
+
 # Quick Reference: Optimized Cursor Rules
 
 ## 🚀 Start Here
@@ -124,7 +130,3 @@ Reference: @project-context.mdc#Security Priorities
 See `@README.md` for complete optimization details and migration guide.
 
 **Remember**: Start with `@bug-fix-workflow.mdc`, use `@consolidated-rules.mdc` for phase guidance, and reference `@subsection` for surgical rule injection.
-description:
-globs:
-alwaysApply: true
----

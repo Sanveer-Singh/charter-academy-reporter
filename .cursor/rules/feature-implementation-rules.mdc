@@ -1,3 +1,9 @@
+---
+description: Feature implementation phase rules for test-driven development
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # Feature Implementation Phase Rules
 
 ## Critical Rules

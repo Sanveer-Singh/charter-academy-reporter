@@ -1,3 +1,9 @@
+---
+description: Feature analysis phase rules for comprehensive feature requirement analysis
+globs: ["**/*"]
+alwaysApply: false
+---
+
 # Feature Analysis Phase Rules
 
 ## Critical Rules
