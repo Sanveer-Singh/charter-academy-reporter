@@ -1,0 +1,132 @@
+<!-- Sidebar -->
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+    <!-- Sidebar - Brand -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-area="" asp-controller="Home" asp-action="Index">
+        <div class="sidebar-brand-icon rotate-n-15">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="sidebar-brand-text mx-3">Charter <sup>Reporter</sup></div>
+    </a>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider my-0">
+
+    <!-- Nav Item - Dashboard -->
+    <li class="nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
+        <a class="nav-link" asp-area="" asp-controller="Dashboard" asp-action="Index">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+    </li>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider">
+
+    <!-- Heading -->
+    <div class="sidebar-heading">
+        Reporting
+    </div>
+
+    <!-- Nav Item - Reports -->
+    <li class="nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Report" ? "active" : "")">
+        <a class="nav-link" asp-area="" asp-controller="Report" asp-action="Index">
+            <i class="fas fa-fw fa-chart-area"></i>
+            <span>Reports</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Data Export -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseExport"
+           aria-expanded="true" aria-controls="collapseExport">
+            <i class="fas fa-fw fa-download"></i>
+            <span>Data Export</span>
+        </a>
+        <div id="collapseExport" class="collapse" aria-labelledby="headingExport" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Export Options:</h6>
+                <a class="collapse-item" href="#" onclick="exportData('csv')">CSV Export</a>
+                <a class="collapse-item" href="#" onclick="exportData('xlsx')">Excel Export</a>
+            </div>
+        </div>
+    </li>
+
+    @if (User.IsInRole("Charter-Admin"))
+    {
+        <!-- Divider -->
+        <hr class="sidebar-divider">
+
+        <!-- Heading -->
+        <div class="sidebar-heading">
+            Administration
+        </div>
+
+        <!-- Nav Item - User Management -->
+        <li class="nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Admin" ? "active" : "")">
+            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseAdmin"
+               aria-expanded="true" aria-controls="collapseAdmin">
+                <i class="fas fa-fw fa-users-cog"></i>
+                <span>User Management</span>
+            </a>
+            <div id="collapseAdmin" class="collapse" aria-labelledby="headingAdmin" data-parent="#accordionSidebar">
+                <div class="bg-white py-2 collapse-inner rounded">
+                    <h6 class="collapse-header">Admin Functions:</h6>
+                    <a class="collapse-item" asp-controller="Admin" asp-action="Approvals">
+                        Registration Approvals
+                        <span class="badge badge-warning ml-1" id="pending-count">0</span>
+                    </a>
+                    <a class="collapse-item" asp-controller="Admin" asp-action="UserManagement">User Management</a>
+                    <a class="collapse-item" href="#" onclick="viewAuditLogs()">Audit Logs</a>
+                </div>
+            </div>
+        </li>
+    }
+
+    <!-- Divider -->
+    <hr class="sidebar-divider d-none d-md-block">
+
+    <!-- Sidebar Toggler (Sidebar) -->
+    <div class="text-center d-none d-md-inline">
+        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    </div>
+
+</ul>
+<!-- End of Sidebar -->
+
+<script>
+    // Update pending count on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        @if (User.IsInRole("Charter-Admin"))
+        {
+            <text>
+            updatePendingCount();
+            // Update every 30 seconds
+            setInterval(updatePendingCount, 30000);
+            </text>
+        }
+    });
+
+    function updatePendingCount() {
+        fetch('/Admin/GetPendingCount')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('pending-count');
+                if (badge && data.count !== undefined) {
+                    badge.textContent = data.count;
+                    badge.style.display = data.count > 0 ? 'inline' : 'none';
+                }
+            })
+            .catch(error => console.warn('Failed to update pending count:', error));
+    }
+
+    function exportData(format) {
+        // This will be implemented with the reporting module
+        console.log(`Exporting data in ${format} format`);
+    }
+
+    function viewAuditLogs() {
+        // This will be implemented with the audit module
+        console.log('Viewing audit logs');
+    }
+</script>

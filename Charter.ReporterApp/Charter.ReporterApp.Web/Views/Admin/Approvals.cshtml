@@ -1,0 +1,174 @@
+@model ApprovalQueueViewModel
+@{
+    ViewData["Title"] = "Registration Approvals";
+}
+
+@section Styles {
+    <link href="~/css/modules/admin-approval.css" rel="stylesheet" />
+}
+
+<div class="container-fluid approval-queue">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Registration Approvals</h1>
+        <div>
+            <span class="badge badge-warning">@Model.PendingCount Pending</span>
+            <span class="badge badge-success">@Model.ApprovedTodayCount Approved Today</span>
+        </div>
+    </div>
+
+    <!-- Approval Cards -->
+    <div class="row">
+        @foreach (var request in Model.PendingRequests)
+        {
+            <div class="col-12">
+                <div class="card approval-card" data-request-id="@request.Id">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="approval-card__header">
+                        <h2 class="approval-card__title">@request.FullName</h2>
+                        <span class="approval-card__status approval-card__status--pending">
+                            <i class="fas fa-clock mr-1"></i> Pending Approval
+                        </span>
+                    </div>
+                    
+                    <div class="approval-details">
+                        <div class="approval-details__row">
+                            <span class="approval-details__label">Email:</span>
+                            <span class="approval-details__value">
+                                <a href="mailto:@request.Email">@request.Email</a>
+                            </span>
+                        </div>
+                        
+                        <div class="approval-details__row">
+                            <span class="approval-details__label">Organization:</span>
+                            <span class="approval-details__value">@request.Organization</span>
+                        </div>
+                        
+                        <div class="approval-details__row">
+                            <span class="approval-details__label">Requested Role:</span>
+                            <span class="approval-details__value">
+                                <span class="badge badge-info">@request.RequestedRole</span>
+                            </span>
+                        </div>
+                        
+                        <div class="approval-details__row">
+                            <span class="approval-details__label">ID Number:</span>
+                            <span class="approval-details__value">@request.IdNumber</span>
+                        </div>
+                        
+                        <div class="approval-details__row">
+                            <span class="approval-details__label">Phone Number:</span>
+                            <span class="approval-details__value">
+                                <a href="tel:@request.PhoneNumber">@request.PhoneNumber</a>
+                            </span>
+                        </div>
+                        
+                        <div class="approval-details__row">
+                            <span class="approval-details__label">Address:</span>
+                            <span class="approval-details__value">@request.Address</span>
+                        </div>
+                        
+                        <div class="approval-details__row">
+                            <span class="approval-details__label">Submitted:</span>
+                            <span class="approval-details__value">
+                                @request.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                                <small class="text-muted">(@((DateTime.UtcNow - request.CreatedAt).Days) days ago)</small>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="approval-actions">
+                        <button class="btn btn-approve" 
+                                onclick="approveRequest('@request.Id')"
+                                aria-label="Approve registration for @request.FullName">
+                            <i class="fas fa-check mr-1"></i> Approve
+                        </button>
+                        
+                        <button class="btn btn-reject" 
+                                onclick="showRejectModal('@request.Id', '@request.FullName')"
+                                aria-label="Reject registration for @request.FullName">
+                            <i class="fas fa-times mr-1"></i> Reject
+                        </button>
+                        
+                        <a class="btn btn-secondary" 
+                           asp-action="RegistrationDetails" asp-route-id="@request.Id"
+                           aria-label="View full details for @request.FullName">
+                            <i class="fas fa-info-circle mr-1"></i> View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.PendingRequests.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>No pending registration requests at this time.</strong>
+            <p class="mb-0 mt-2">New registration requests will appear here for your review.</p>
+        </div>
+    }
+</div>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectModalLabel">Reject Registration</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to reject the registration for <strong id="rejectUserName"></strong>.</p>
+                <form id="rejectForm">
+                    <input type="hidden" id="rejectRequestId" />
+                    <div class="form-group">
+                        <label for="rejectionReason">
+                            Reason for Rejection <span class="required-indicator">*</span>
+                        </label>
+                        <textarea class="form-control" id="rejectionReason" rows="4" required
+                                  placeholder="Please provide a clear reason for rejecting this registration request. This will be included in the notification email to the applicant."></textarea>
+                        <div class="invalid-feedback">
+                            Please provide a reason for rejection.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmReject()">
+                    <i class="fas fa-ban mr-1"></i> Confirm Rejection
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/modules/admin-approval.js"></script>
+    <script>
+        // Initialize approval functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-refresh pending count every 30 seconds
+            setInterval(updatePendingCount, 30000);
+        });
+
+        function updatePendingCount() {
+            fetch('/Admin/GetPendingCount')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.querySelector('.badge-warning');
+                    if (badge && data.count !== undefined) {
+                        badge.textContent = `${data.count} Pending`;
+                    }
+                })
+                .catch(error => console.warn('Failed to update pending count:', error));
+        }
+    </script>
+}

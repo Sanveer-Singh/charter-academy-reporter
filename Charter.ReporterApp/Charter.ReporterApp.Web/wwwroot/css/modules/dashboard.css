@@ -1,0 +1,63 @@
+/* modules/dashboard.css - Dashboard module overrides */
+
+/* Dashboard grid layout */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--charter-spacing-lg);
+}
+
+/* Override SB Admin 2 card for dashboard metrics */
+.metric-card {
+    background: white;
+    border-left: 4px solid var(--charter-primary);
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--charter-shadow-md);
+}
+
+.metric-card__value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--charter-primary);
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    height: 400px;
+    padding: var(--charter-spacing-md);
+}
+
+/* Filter panel */
+.filter-panel {
+    background-color: var(--charter-gray-50);
+    border-radius: var(--charter-radius-md);
+    padding: var(--charter-spacing-md);
+    margin-bottom: var(--charter-spacing-lg);
+}
+
+/* Export button customization */
+.btn-export {
+    background-color: var(--charter-success);
+    border-color: var(--charter-success);
+    color: white;
+}
+
+.btn-export:hover {
+    background-color: color-mix(in srgb, var(--charter-success) 85%, black);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+}

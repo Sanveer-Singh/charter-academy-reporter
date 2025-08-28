@@ -1,0 +1,224 @@
+/* modules/admin-approval.css - Admin approval specific overrides */
+
+/* Approval queue container */
+.approval-queue {
+    padding: var(--charter-spacing-lg);
+}
+
+/* Override card for approval items */
+.approval-card {
+    border-left: 4px solid var(--charter-warning);
+    margin-bottom: var(--charter-spacing-md);
+    transition: all var(--charter-transition-base);
+}
+
+.approval-card--approved {
+    border-left-color: var(--charter-success);
+    opacity: 0.8;
+}
+
+.approval-card--rejected {
+    border-left-color: var(--charter-danger);
+    opacity: 0.8;
+}
+
+/* Approval card header */
+.approval-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--charter-spacing-md);
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.approval-card__title {
+    font-size: var(--charter-font-size-lg);
+    font-weight: 600;
+    color: var(--charter-primary);
+    margin: 0;
+}
+
+.approval-card__status {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--charter-spacing-xs) var(--charter-spacing-sm);
+    border-radius: 0.25rem;
+    font-size: var(--charter-font-size-sm);
+    font-weight: 500;
+}
+
+.approval-card__status--pending {
+    background-color: color-mix(in srgb, var(--charter-warning) 20%, white);
+    color: color-mix(in srgb, var(--charter-warning) 80%, black);
+}
+
+/* Approval details */
+.approval-details {
+    padding: var(--charter-spacing-md);
+}
+
+.approval-details__row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: var(--charter-spacing-md);
+    margin-bottom: var(--charter-spacing-sm);
+}
+
+.approval-details__label {
+    font-weight: 600;
+    color: #5a5c69;
+}
+
+.approval-details__value {
+    color: #858796;
+}
+
+/* Action buttons */
+.approval-actions {
+    display: flex;
+    gap: var(--charter-spacing-sm);
+    padding: var(--charter-spacing-md);
+    background-color: #f8f9fc;
+    border-top: 1px solid #e3e6f0;
+}
+
+.btn-approve {
+    background-color: var(--charter-success);
+    border-color: var(--charter-success);
+    color: white;
+}
+
+.btn-approve:hover {
+    background-color: color-mix(in srgb, var(--charter-success) 85%, black);
+    border-color: color-mix(in srgb, var(--charter-success) 85%, black);
+}
+
+.btn-reject {
+    background-color: var(--charter-danger);
+    border-color: var(--charter-danger);
+    color: white;
+}
+
+.btn-reject:hover {
+    background-color: color-mix(in srgb, var(--charter-danger) 85%, black);
+    border-color: color-mix(in srgb, var(--charter-danger) 85%, black);
+}
+
+/* Approval table view (alternative layout) */
+.approval-table {
+    background: white;
+    border-radius: 0.35rem;
+    overflow: hidden;
+    box-shadow: var(--charter-shadow-sm);
+}
+
+.approval-table .table {
+    margin-bottom: 0;
+}
+
+.approval-table tbody tr {
+    transition: background-color var(--charter-transition-fast);
+}
+
+.approval-table tbody tr:hover {
+    background-color: #f8f9fc;
+}
+
+/* Status badges in table */
+.status-badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+}
+
+.status-badge--pending {
+    background-color: var(--charter-warning);
+    color: #000;
+}
+
+.status-badge--approved {
+    background-color: var(--charter-success);
+    color: #fff;
+}
+
+.status-badge--rejected {
+    background-color: var(--charter-danger);
+    color: #fff;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .approval-queue {
+        padding: var(--charter-spacing-sm);
+    }
+    
+    .approval-details__row {
+        grid-template-columns: 1fr;
+        gap: var(--charter-spacing-xs);
+    }
+    
+    .approval-details__label {
+        font-size: var(--charter-font-size-sm);
+    }
+    
+    .approval-actions {
+        flex-direction: column;
+    }
+    
+    .approval-table {
+        overflow-x: auto;
+    }
+    
+    /* Hide less important columns on mobile */
+    .hide-mobile {
+        display: none;
+    }
+}
+
+/* Loading state for approval actions */
+.approval-card.is-processing {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.approval-card.is-processing .approval-actions {
+    position: relative;
+}
+
+.approval-card.is-processing .approval-actions::after {
+    content: "Processing...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: var(--charter-spacing-sm) var(--charter-spacing-md);
+    border-radius: 0.25rem;
+    box-shadow: var(--charter-shadow-md);
+    font-weight: 600;
+    color: var(--charter-primary);
+}
+
+/* Accessibility improvements */
+.approval-card:focus-within {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--charter-primary) 25%, transparent);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .approval-card {
+        border-width: 2px;
+        border-style: solid;
+    }
+    
+    .status-badge {
+        border: 1px solid currentColor;
+    }
+}

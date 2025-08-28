@@ -1,0 +1,88 @@
+@model Charter.ReporterApp.Application.DTOs.LoginDto
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_LoginLayout";
+}
+
+@section Styles {
+    <link href="~/css/modules/authentication.css" rel="stylesheet" />
+}
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="card o-hidden border-0 shadow-lg">
+            <div class="card-body p-0">
+                <div class="auth-form__logo">
+                    <img src="~/images/charter-logo.png" alt="Charter Institute" />
+                </div>
+                
+                <div class="p-5">
+                    <div class="auth-form__title">Welcome Back</div>
+                    <div class="auth-form__subtitle">Sign in to your account</div>
+                    
+                    <form class="auth-form" asp-action="Login" method="post">
+                        <input type="hidden" asp-for="@ViewData["ReturnUrl"]" />
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                        
+                        <div class="form-group">
+                            <label asp-for="Email">Email Address</label>
+                            <input asp-for="Email" class="form-control" 
+                                   placeholder="Enter email address" required autofocus />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label asp-for="Password">Password</label>
+                            <input asp-for="Password" class="form-control" 
+                                   placeholder="Enter password" required />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="auth-form__remember">
+                            <input asp-for="RememberMe" type="checkbox" />
+                            <label asp-for="RememberMe">Remember me on this device</label>
+                        </div>
+                        
+                        <button type="submit" class="auth-form__submit btn btn-primary">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                        </button>
+                        
+                        <div class="auth-form__links">
+                            <p>
+                                <a asp-action="ForgotPassword" class="auth-form__link">Forgot your password?</a>
+                            </p>
+                            <p>Don't have an account? 
+                                <a asp-action="Register" class="auth-form__link">Register here</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form submission loading state
+            const form = document.querySelector('.auth-form');
+            const submitButton = document.querySelector('.auth-form__submit');
+            
+            if (form && submitButton) {
+                form.addEventListener('submit', function() {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing in...';
+                    form.classList.add('is-submitting');
+                });
+            }
+            
+            // Auto-focus email field if empty
+            const emailInput = document.querySelector('input[name="Email"]');
+            if (emailInput && !emailInput.value) {
+                emailInput.focus();
+            }
+        });
+    </script>
+}

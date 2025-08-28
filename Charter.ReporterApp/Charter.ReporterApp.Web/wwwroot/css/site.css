@@ -1,0 +1,370 @@
+/* Charter Reporter App - Global Site Styles
+   This file contains site-wide overrides to SB Admin 2 theme
+   Using CSS variables defined in variables.css */
+
+/* ========================================
+   Global Resets and Base Styles
+   ======================================== */
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--charter-font-family);
+    color: var(--charter-gray-900);
+    background-color: var(--charter-gray-50);
+}
+
+/* ========================================
+   Override SB Admin 2 Primary Colors
+   ======================================== */
+
+.bg-primary {
+    background-color: var(--charter-primary) !important;
+}
+
+.text-primary {
+    color: var(--charter-primary) !important;
+}
+
+.btn-primary {
+    background-color: var(--charter-primary);
+    border-color: var(--charter-primary);
+    transition: all var(--charter-transition-fast);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--charter-primary-dark);
+    border-color: var(--charter-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--charter-shadow-md);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* ========================================
+   Typography Enhancements
+   ======================================== */
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--charter-gray-900);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.h1, h1 { font-size: var(--charter-font-size-3xl); }
+.h2, h2 { font-size: var(--charter-font-size-2xl); }
+.h3, h3 { font-size: var(--charter-font-size-xl); }
+.h4, h4 { font-size: var(--charter-font-size-lg); }
+.h5, h5 { font-size: var(--charter-font-size-base); }
+.h6, h6 { font-size: var(--charter-font-size-sm); }
+
+/* ========================================
+   Card Enhancements
+   ======================================== */
+
+.card {
+    border: none;
+    box-shadow: var(--charter-shadow-sm);
+    transition: box-shadow var(--charter-transition-base);
+}
+
+.card:hover {
+    box-shadow: var(--charter-shadow-md);
+}
+
+.card-header {
+    background-color: var(--charter-gray-50);
+    border-bottom: 1px solid var(--charter-gray-200);
+    font-weight: 600;
+}
+
+/* ========================================
+   Form Enhancements
+   ======================================== */
+
+.form-control {
+    border-color: var(--charter-gray-300);
+    transition: all var(--charter-transition-fast);
+}
+
+.form-control:focus {
+    border-color: var(--charter-primary);
+    box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+}
+
+.form-control.is-invalid:focus {
+    box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+}
+
+/* Required field indicator */
+.required-indicator {
+    color: var(--charter-danger);
+    font-weight: 600;
+    margin-left: 2px;
+}
+
+/* ========================================
+   Table Enhancements
+   ======================================== */
+
+.table {
+    color: var(--charter-gray-700);
+}
+
+.table thead th {
+    background-color: var(--charter-gray-50);
+    color: var(--charter-gray-900);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--charter-font-size-sm);
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--charter-gray-200);
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--charter-gray-50);
+}
+
+/* ========================================
+   Accessibility Enhancements
+   ======================================== */
+
+/* Focus states */
+:focus-visible {
+    outline: 2px solid var(--charter-primary);
+    outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--charter-primary);
+    color: white;
+    padding: var(--charter-spacing-sm) var(--charter-spacing-md);
+    text-decoration: none;
+    z-index: var(--charter-z-tooltip);
+    border-radius: var(--charter-radius-md);
+}
+
+.skip-link:focus {
+    top: var(--charter-spacing-sm);
+    left: var(--charter-spacing-sm);
+}
+
+/* Screen reader only text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ========================================
+   Loading States
+   ======================================== */
+
+.loading {
+    position: relative;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px;
+    border: 3px solid var(--charter-gray-300);
+    border-top-color: var(--charter-primary);
+    border-radius: 50%;
+    animation: spinner 0.75s linear infinite;
+}
+
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+/* Loading button state */
+.btn.is-loading {
+    color: transparent;
+    position: relative;
+    pointer-events: none;
+}
+
+.btn.is-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner 0.75s linear infinite;
+}
+
+/* ========================================
+   Alert Enhancements
+   ======================================== */
+
+.alert {
+    border: none;
+    border-radius: var(--charter-radius-md);
+    box-shadow: var(--charter-shadow-sm);
+}
+
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--charter-success);
+    border-left: 4px solid var(--charter-success);
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--charter-danger);
+    border-left: 4px solid var(--charter-danger);
+}
+
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--charter-warning);
+    border-left: 4px solid var(--charter-warning);
+}
+
+.alert-info {
+    background-color: rgba(6, 182, 212, 0.1);
+    color: var(--charter-info);
+    border-left: 4px solid var(--charter-info);
+}
+
+/* ========================================
+   Badge Enhancements
+   ======================================== */
+
+.badge {
+    font-weight: 500;
+    padding: 0.25em 0.6em;
+    border-radius: var(--charter-radius-sm);
+}
+
+.badge-primary {
+    background-color: var(--charter-primary);
+}
+
+.badge-success {
+    background-color: var(--charter-success);
+}
+
+.badge-danger {
+    background-color: var(--charter-danger);
+}
+
+.badge-warning {
+    background-color: var(--charter-warning);
+    color: var(--charter-gray-900);
+}
+
+/* ========================================
+   Utility Classes
+   ======================================== */
+
+/* Spacing utilities using Charter spacing scale */
+.mt-charter-1 { margin-top: var(--charter-spacing-sm); }
+.mt-charter-2 { margin-top: var(--charter-spacing-md); }
+.mt-charter-3 { margin-top: var(--charter-spacing-lg); }
+.mt-charter-4 { margin-top: var(--charter-spacing-xl); }
+.mt-charter-5 { margin-top: var(--charter-spacing-2xl); }
+
+/* Text utilities */
+.text-muted {
+    color: var(--charter-gray-500) !important;
+}
+
+/* Shadow utilities */
+.shadow-charter-sm { box-shadow: var(--charter-shadow-sm) !important; }
+.shadow-charter-md { box-shadow: var(--charter-shadow-md) !important; }
+.shadow-charter-lg { box-shadow: var(--charter-shadow-lg) !important; }
+
+/* ========================================
+   Responsive Utilities
+   ======================================== */
+
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+    
+    /* Reduce font sizes on mobile */
+    html {
+        font-size: 14px;
+    }
+    
+    /* Stack buttons on mobile */
+    .btn-group-mobile-stack {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .btn-group-mobile-stack .btn {
+        margin-bottom: var(--charter-spacing-sm);
+    }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+    .no-print,
+    .sidebar,
+    .topbar,
+    .btn,
+    .alert-dismissible .close {
+        display: none !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #dee2e6 !important;
+    }
+}
+
+/* ========================================
+   Animation Classes
+   ======================================== */
+
+.fade-in {
+    animation: fadeIn var(--charter-transition-slow);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in-right {
+    animation: slideInRight var(--charter-transition-slow);
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}

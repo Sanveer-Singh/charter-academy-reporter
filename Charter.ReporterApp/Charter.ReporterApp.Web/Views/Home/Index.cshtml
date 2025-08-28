@@ -1,0 +1,75 @@
+@{
+    ViewData["Title"] = "Home";
+    Layout = "_LoginLayout";
+}
+
+@section Styles {
+    <style>
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--charter-primary) 0%, var(--charter-primary-dark) 100%);
+            color: white;
+            text-align: center;
+        }
+        
+        .hero-content {
+            max-width: 600px;
+            padding: 2rem;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .btn-hero {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0.5rem;
+        }
+        
+        @@media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+}
+
+<div class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">Charter Reporter</h1>
+        <p class="hero-subtitle">
+            Secure reporting and analytics platform for the Charter Institute community
+        </p>
+        
+        <div class="mt-4">
+            <a asp-controller="Account" asp-action="Login" class="btn btn-light btn-hero">
+                <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+            </a>
+            <a asp-controller="Account" asp-action="Register" class="btn btn-outline-light btn-hero">
+                <i class="fas fa-user-plus mr-2"></i>Register
+            </a>
+        </div>
+        
+        <div class="mt-5">
+            <small class="text-white-50">
+                Secure • Compliant • Professional
+            </small>
+        </div>
+    </div>
+</div>

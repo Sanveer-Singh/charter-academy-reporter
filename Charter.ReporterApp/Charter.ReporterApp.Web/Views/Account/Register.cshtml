@@ -1,0 +1,165 @@
+@model Charter.ReporterApp.Application.DTOs.RegisterUserDto
+@{
+    ViewData["Title"] = "Register";
+    Layout = "_LoginLayout";
+}
+
+@section Styles {
+    <link href="~/css/modules/authentication.css" rel="stylesheet" />
+}
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="card o-hidden border-0 shadow-lg">
+            <div class="card-body p-0">
+                <div class="auth-form__logo">
+                    <img src="~/images/charter-logo.png" alt="Charter Institute" />
+                </div>
+                
+                <div class="p-5">
+                    <div class="auth-form__title">Create an Account</div>
+                    <div class="auth-form__subtitle">Join the Charter Institute community</div>
+                    
+                    <form class="auth-form" asp-action="Register" method="post">
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                        
+                        <div class="registration-form__section">
+                            <h3 class="registration-form__section-title">Personal Information</h3>
+                            
+                            <div class="form-group">
+                                <label asp-for="FullName">
+                                    Full Name <span class="required-indicator">*</span>
+                                </label>
+                                <input asp-for="FullName" class="form-control" 
+                                       placeholder="Enter your full name" required />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label asp-for="Email">
+                                    Email Address <span class="required-indicator">*</span>
+                                </label>
+                                <input asp-for="Email" class="form-control" 
+                                       placeholder="Enter email address" required />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label asp-for="IdNumber">
+                                    South African ID Number <span class="required-indicator">*</span>
+                                </label>
+                                <input asp-for="IdNumber" class="form-control" 
+                                       placeholder="Enter 13-digit ID number" required 
+                                       pattern="[0-9]{13}" maxlength="13" />
+                                <span asp-validation-for="IdNumber" class="text-danger"></span>
+                                <small class="form-text text-muted">Enter your 13-digit South African ID number</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label asp-for="PhoneNumber">
+                                    Phone Number <span class="required-indicator">*</span>
+                                </label>
+                                <input asp-for="PhoneNumber" class="form-control" 
+                                       placeholder="e.g., +27123456789" required />
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label asp-for="Address">
+                                    Physical Address <span class="required-indicator">*</span>
+                                </label>
+                                <textarea asp-for="Address" class="form-control" rows="3"
+                                          placeholder="Enter your physical address" required></textarea>
+                                <span asp-validation-for="Address" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="registration-form__section">
+                            <h3 class="registration-form__section-title">Organization & Role</h3>
+                            
+                            <div class="form-group">
+                                <label asp-for="Organization">
+                                    Organization <span class="required-indicator">*</span>
+                                </label>
+                                <input asp-for="Organization" class="form-control" 
+                                       placeholder="Enter your organization name" required />
+                                <span asp-validation-for="Organization" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label asp-for="RequestedRole">
+                                    Requested Role <span class="required-indicator">*</span>
+                                </label>
+                                <select asp-for="RequestedRole" 
+                                        asp-items="ViewBag.Roles" 
+                                        class="form-control registration-form__role-select" required>
+                                    <option value="">Select a role</option>
+                                </select>
+                                <span asp-validation-for="RequestedRole" class="text-danger"></span>
+                                <small class="form-text text-muted">Select the role that best describes your position and access requirements</small>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="auth-form__submit btn btn-primary">
+                            <i class="fas fa-user-plus mr-2"></i>Register Account
+                        </button>
+                        
+                        <div class="auth-form__links">
+                            <p>Already have an account? 
+                                <a asp-action="Login" class="auth-form__link">Sign in here</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ID Number validation
+            const idInput = document.querySelector('input[name="IdNumber"]');
+            if (idInput) {
+                idInput.addEventListener('input', function(e) {
+                    // Remove any non-numeric characters
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    
+                    // Limit to 13 digits
+                    if (this.value.length > 13) {
+                        this.value = this.value.slice(0, 13);
+                    }
+                });
+            }
+            
+            // Phone number formatting
+            const phoneInput = document.querySelector('input[name="PhoneNumber"]');
+            if (phoneInput) {
+                phoneInput.addEventListener('blur', function(e) {
+                    let value = this.value.replace(/[^0-9+]/g, '');
+                    
+                    // Add +27 prefix if not present and starts with 0
+                    if (value.startsWith('0') && !value.startsWith('+27')) {
+                        value = '+27' + value.substring(1);
+                    }
+                    
+                    this.value = value;
+                });
+            }
+            
+            // Form submission loading state
+            const form = document.querySelector('.auth-form');
+            const submitButton = document.querySelector('.auth-form__submit');
+            
+            if (form && submitButton) {
+                form.addEventListener('submit', function() {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                    form.classList.add('is-submitting');
+                });
+            }
+        });
+    </script>
+}
