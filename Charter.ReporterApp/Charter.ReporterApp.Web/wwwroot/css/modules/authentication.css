@@ -1,0 +1,270 @@
+/* modules/authentication.css - Authentication module specific styles */
+
+/* ========================================
+   Login & Registration Layout
+   ======================================== */
+
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--charter-primary) 0%, var(--charter-primary-dark) 100%);
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    margin: var(--charter-spacing-lg);
+}
+
+.auth-card .card-body {
+    padding: var(--charter-spacing-xl);
+}
+
+/* ========================================
+   Authentication Form Styling
+   ======================================== */
+
+.auth-form__logo {
+    text-align: center;
+    margin-bottom: var(--charter-spacing-xl);
+}
+
+.auth-form__logo img {
+    max-width: 200px;
+    height: auto;
+}
+
+.auth-form__title {
+    text-align: center;
+    color: var(--charter-gray-900);
+    font-size: var(--charter-font-size-2xl);
+    font-weight: 600;
+    margin-bottom: var(--charter-spacing-lg);
+}
+
+.auth-form__subtitle {
+    text-align: center;
+    color: var(--charter-gray-600);
+    font-size: var(--charter-font-size-base);
+    margin-bottom: var(--charter-spacing-xl);
+}
+
+/* Form inputs */
+.auth-form .form-group {
+    margin-bottom: var(--charter-spacing-lg);
+}
+
+.auth-form .form-control {
+    padding: var(--charter-spacing-sm) var(--charter-spacing-md);
+    font-size: var(--charter-font-size-base);
+    border-radius: var(--charter-radius-md);
+}
+
+.auth-form .form-control:focus {
+    border-color: var(--charter-primary);
+    box-shadow: 0 0 0 0.2rem rgba(30, 58, 138, 0.25);
+}
+
+/* Remember me checkbox */
+.auth-form__remember {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--charter-spacing-lg);
+}
+
+.auth-form__remember input[type="checkbox"] {
+    margin-right: var(--charter-spacing-sm);
+}
+
+/* Submit button */
+.auth-form__submit {
+    width: 100%;
+    padding: var(--charter-spacing-sm) var(--charter-spacing-lg);
+    font-size: var(--charter-font-size-base);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: var(--charter-radius-md);
+    transition: all var(--charter-transition-base);
+}
+
+.auth-form__submit:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--charter-shadow-lg);
+}
+
+/* Links */
+.auth-form__links {
+    text-align: center;
+    margin-top: var(--charter-spacing-lg);
+}
+
+.auth-form__link {
+    color: var(--charter-primary);
+    text-decoration: none;
+    font-size: var(--charter-font-size-sm);
+    transition: color var(--charter-transition-fast);
+}
+
+.auth-form__link:hover {
+    color: var(--charter-primary-dark);
+    text-decoration: underline;
+}
+
+/* ========================================
+   Registration Specific
+   ======================================== */
+
+.registration-form__section {
+    margin-bottom: var(--charter-spacing-xl);
+    padding-bottom: var(--charter-spacing-xl);
+    border-bottom: 1px solid var(--charter-gray-200);
+}
+
+.registration-form__section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.registration-form__section-title {
+    font-size: var(--charter-font-size-lg);
+    font-weight: 600;
+    color: var(--charter-gray-900);
+    margin-bottom: var(--charter-spacing-md);
+}
+
+/* Role selection */
+.role-select {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--charter-spacing-md);
+    margin-top: var(--charter-spacing-md);
+}
+
+.role-option {
+    position: relative;
+    padding: var(--charter-spacing-md);
+    border: 2px solid var(--charter-gray-300);
+    border-radius: var(--charter-radius-md);
+    cursor: pointer;
+    transition: all var(--charter-transition-fast);
+}
+
+.role-option:hover {
+    border-color: var(--charter-primary);
+    background-color: var(--charter-gray-50);
+}
+
+.role-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+}
+
+.role-option input[type="radio"]:checked + .role-option__content {
+    border-color: var(--charter-primary);
+    background-color: rgba(30, 58, 138, 0.05);
+}
+
+.role-option__content {
+    display: block;
+    text-align: center;
+}
+
+.role-option__icon {
+    font-size: var(--charter-font-size-2xl);
+    color: var(--charter-primary);
+    margin-bottom: var(--charter-spacing-sm);
+}
+
+.role-option__name {
+    font-weight: 600;
+    color: var(--charter-gray-900);
+}
+
+/* ========================================
+   Password Strength Indicator
+   ======================================== */
+
+.password-strength {
+    margin-top: var(--charter-spacing-sm);
+}
+
+.password-strength__bar {
+    height: 4px;
+    background-color: var(--charter-gray-200);
+    border-radius: var(--charter-radius-full);
+    overflow: hidden;
+}
+
+.password-strength__fill {
+    height: 100%;
+    transition: width var(--charter-transition-base), background-color var(--charter-transition-base);
+}
+
+.password-strength__fill--weak {
+    width: 33%;
+    background-color: var(--charter-danger);
+}
+
+.password-strength__fill--medium {
+    width: 66%;
+    background-color: var(--charter-warning);
+}
+
+.password-strength__fill--strong {
+    width: 100%;
+    background-color: var(--charter-success);
+}
+
+.password-strength__text {
+    font-size: var(--charter-font-size-sm);
+    margin-top: var(--charter-spacing-xs);
+}
+
+/* ========================================
+   Mobile Responsiveness
+   ======================================== */
+
+@media (max-width: 768px) {
+    .auth-container {
+        padding: var(--charter-spacing-md);
+    }
+    
+    .auth-card {
+        margin: 0;
+    }
+    
+    .auth-card .card-body {
+        padding: var(--charter-spacing-lg);
+    }
+    
+    .role-select {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================
+   Loading States
+   ======================================== */
+
+.auth-form.is-submitting .auth-form__submit {
+    position: relative;
+    color: transparent;
+}
+
+.auth-form.is-submitting .auth-form__submit::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #fff;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner 0.75s linear infinite;
+}

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Charter Reporter App - Secure reporting tool for administrators">
+    <title>@ViewData["Title"] - Charter Reporter</title>
+
+    <!-- Custom fonts for SB Admin 2 -->
+    <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- CSS Hierarchy Implementation -->
+    <!-- 1. Base Layer: SB Admin 2 (DO NOT MODIFY) -->
+    <link href="~/vendor/sb-admin-2/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <!-- 2. Site Layer: Global overrides and variables -->
+    <link href="~/css/variables.css" rel="stylesheet">
+    <link href="~/css/site.css" rel="stylesheet">
+
+    <!-- 3. Module Layer: Page-specific styles -->
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+
+<body id="page-top">
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+        <!-- Sidebar -->
+        @await Html.PartialAsync("_Sidebar")
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+            <!-- Main Content -->
+            <div id="content">
+                <!-- Topbar -->
+                @await Html.PartialAsync("_Topbar")
+
+                <!-- Begin Page Content -->
+                <main id="main-content" class="container-fluid">
+                    <!-- Display success/error messages -->
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    }
+
+                    @if (TempData["WarningMessage"] != null)
+                    {
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            @TempData["WarningMessage"]
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    }
+
+                    @RenderBody()
+                </main>
+                <!-- /.container-fluid -->
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            @await Html.PartialAsync("_Footer")
+        </div>
+        <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Logout Modal-->
+    @await Html.PartialAsync("_LogoutModal")
+
+    <!-- JavaScript -->
+    <!-- Bootstrap core JavaScript-->
+    <script src="~/vendor/jquery/jquery.min.js"></script>
+    <script src="~/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="~/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- SB Admin 2 JavaScript -->
+    <script src="~/vendor/sb-admin-2/js/sb-admin-2.min.js"></script>
+
+    <!-- Site-wide JavaScript -->
+    <script src="~/js/site.js"></script>
+
+    <!-- Anti-forgery token helper for AJAX -->
+    <script>
+      window.getCsrfToken = function() {
+        var el = document.querySelector('input[name="__RequestVerificationToken"]');
+        return el ? el.value : '';
+      };
+    </script>
+
+    <!-- Page-specific scripts -->
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
