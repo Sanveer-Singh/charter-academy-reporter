@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Charter Reporter App - Admin Approvals">
+    <title>Registration Approvals - Charter Reporter</title>
+
+    <!-- Custom fonts for SB Admin 2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- CSS Hierarchy Implementation -->
+    <link href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="../../wwwroot/css/variables.css" rel="stylesheet">
+    <link href="../../wwwroot/css/site.css" rel="stylesheet">
+    <link href="../../wwwroot/css/modules/admin-approval.css" rel="stylesheet">
+</head>
+
+<body id="page-top">
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+        <!-- Include Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+            <!-- Sidebar content (same as _Layout.html) -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
+                <div class="sidebar-brand-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Charter Reporter</div>
+            </a>
+            <hr class="sidebar-divider my-0">
+            <li class="nav-item">
+                <a class="nav-link" href="/dashboard">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">Management</div>
+            <li class="nav-item">
+                <a class="nav-link" href="/reports">
+                    <i class="fas fa-fw fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link" href="/admin/approvals">
+                    <i class="fas fa-fw fa-user-check"></i>
+                    <span>Approvals</span>
+                    <span class="badge badge-danger badge-counter" id="pendingCount">3</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+            <!-- Main Content -->
+            <div id="content">
+                <!-- Include Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <!-- Topbar content (same as _Layout.html) -->
+                </nav>
+
+                <!-- Begin Page Content -->
+                <main id="main-content" class="container-fluid approval-queue">
+                    <!-- Page Heading -->
+                    <div class="approval-queue__header">
+                        <h1 class="approval-queue__title">Registration Approvals</h1>
+                        <div class="approval-queue__stats">
+                            <span class="badge badge-warning">3 Pending</span>
+                            <span class="badge badge-success">12 Approved Today</span>
+                            <span class="badge badge-secondary">156 Total</span>
+                        </div>
+                    </div>
+
+                    <!-- Filter Panel -->
+                    <div class="approval-filters">
+                        <div class="approval-search position-relative">
+                            <i class="fas fa-search approval-search__icon"></i>
+                            <input 
+                                type="text" 
+                                class="approval-search__input" 
+                                placeholder="Search by name, email, or organization..."
+                                id="searchInput"
+                            >
+                        </div>
+                        <select class="form-control" style="width: auto;">
+                            <option value="">All Statuses</option>
+                            <option value="pending" selected>Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <select class="form-control" style="width: auto;">
+                            <option value="">All Roles</option>
+                            <option value="Charter-Admin">Charter Admin</option>
+                            <option value="Rebosa-Admin">Rebosa Admin</option>
+                            <option value="PPRA-Admin">PPRA Admin</option>
+                        </select>
+                    </div>
+
+                    <!-- Approval Cards -->
+                    <div class="row" id="approvalCards">
+                        <!-- Pending Request 1 -->
+                        <div class="col-12">
+                            <div class="card approval-card" data-request-id="req-001">
+                                <input type="hidden" name="__RequestVerificationToken" value="dummy-token" />
+                                <div class="approval-card__header">
+                                    <h2 class="approval-card__title">John Doe</h2>
+                                    <span class="approval-card__status approval-card__status--pending">
+                                        <i class="fas fa-clock mr-1"></i> Pending
+                                    </span>
+                                </div>
+                                
+                                <div class="approval-details">
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Email:</span>
+                                        <span class="approval-details__value">john.doe@example.com</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Organization:</span>
+                                        <span class="approval-details__value">ABC Corporation</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Requested Role:</span>
+                                        <span class="approval-details__value">
+                                            <span class="badge badge-info">Charter-Admin</span>
+                                        </span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">ID Number:</span>
+                                        <span class="approval-details__value">9001015800084</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Phone:</span>
+                                        <span class="approval-details__value">+27 11 123 4567</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Submitted:</span>
+                                        <span class="approval-details__value">10 Dec 2024 14:30</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="approval-actions">
+                                    <button class="btn btn-approve" 
+                                            onclick="AdminApproval.approveRequest('req-001')"
+                                            aria-label="Approve registration for John Doe">
+                                        <i class="fas fa-check mr-1"></i> Approve
+                                    </button>
+                                    <button class="btn btn-reject" 
+                                            onclick="AdminApproval.showRejectModal('req-001')"
+                                            aria-label="Reject registration for John Doe">
+                                        <i class="fas fa-times mr-1"></i> Reject
+                                    </button>
+                                    <button class="btn btn-secondary" 
+                                            onclick="AdminApproval.viewDetails('req-001')"
+                                            aria-label="View full details for John Doe">
+                                        <i class="fas fa-info-circle mr-1"></i> View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Request 2 -->
+                        <div class="col-12">
+                            <div class="card approval-card" data-request-id="req-002">
+                                <input type="hidden" name="__RequestVerificationToken" value="dummy-token" />
+                                <div class="approval-card__header">
+                                    <h2 class="approval-card__title">Jane Smith</h2>
+                                    <span class="approval-card__status approval-card__status--pending">
+                                        <i class="fas fa-clock mr-1"></i> Pending
+                                    </span>
+                                </div>
+                                
+                                <div class="approval-details">
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Email:</span>
+                                        <span class="approval-details__value">jane.smith@rebosa.co.za</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Organization:</span>
+                                        <span class="approval-details__value">Rebosa Training Institute</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Requested Role:</span>
+                                        <span class="approval-details__value">
+                                            <span class="badge badge-info">Rebosa-Admin</span>
+                                        </span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">ID Number:</span>
+                                        <span class="approval-details__value">8505016800085</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Phone:</span>
+                                        <span class="approval-details__value">+27 21 555 0123</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Submitted:</span>
+                                        <span class="approval-details__value">10 Dec 2024 13:15</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="approval-actions">
+                                    <button class="btn btn-approve" 
+                                            onclick="AdminApproval.approveRequest('req-002')"
+                                            aria-label="Approve registration for Jane Smith">
+                                        <i class="fas fa-check mr-1"></i> Approve
+                                    </button>
+                                    <button class="btn btn-reject" 
+                                            onclick="AdminApproval.showRejectModal('req-002')"
+                                            aria-label="Reject registration for Jane Smith">
+                                        <i class="fas fa-times mr-1"></i> Reject
+                                    </button>
+                                    <button class="btn btn-secondary" 
+                                            onclick="AdminApproval.viewDetails('req-002')"
+                                            aria-label="View full details for Jane Smith">
+                                        <i class="fas fa-info-circle mr-1"></i> View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Request 3 -->
+                        <div class="col-12">
+                            <div class="card approval-card" data-request-id="req-003">
+                                <input type="hidden" name="__RequestVerificationToken" value="dummy-token" />
+                                <div class="approval-card__header">
+                                    <h2 class="approval-card__title">Peter Johnson</h2>
+                                    <span class="approval-card__status approval-card__status--pending">
+                                        <i class="fas fa-clock mr-1"></i> Pending
+                                    </span>
+                                </div>
+                                
+                                <div class="approval-details">
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Email:</span>
+                                        <span class="approval-details__value">p.johnson@ppra.org.za</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Organization:</span>
+                                        <span class="approval-details__value">PPRA Regional Office</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Requested Role:</span>
+                                        <span class="approval-details__value">
+                                            <span class="badge badge-info">PPRA-Admin</span>
+                                        </span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">ID Number:</span>
+                                        <span class="approval-details__value">7812125800086</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Phone:</span>
+                                        <span class="approval-details__value">+27 31 555 0456</span>
+                                    </div>
+                                    <div class="approval-details__row">
+                                        <span class="approval-details__label">Submitted:</span>
+                                        <span class="approval-details__value">10 Dec 2024 11:45</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="approval-actions">
+                                    <button class="btn btn-approve" 
+                                            onclick="AdminApproval.approveRequest('req-003')"
+                                            aria-label="Approve registration for Peter Johnson">
+                                        <i class="fas fa-check mr-1"></i> Approve
+                                    </button>
+                                    <button class="btn btn-reject" 
+                                            onclick="AdminApproval.showRejectModal('req-003')"
+                                            aria-label="Reject registration for Peter Johnson">
+                                        <i class="fas fa-times mr-1"></i> Reject
+                                    </button>
+                                    <button class="btn btn-secondary" 
+                                            onclick="AdminApproval.viewDetails('req-003')"
+                                            aria-label="View full details for Peter Johnson">
+                                        <i class="fas fa-info-circle mr-1"></i> View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State (hidden by default) -->
+                    <div class="approval-empty" style="display: none;" id="emptyState">
+                        <div class="approval-empty__icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h2 class="approval-empty__title">All Caught Up!</h2>
+                        <p class="approval-empty__text">
+                            There are no pending registration requests at this time.
+                        </p>
+                    </div>
+                </main>
+                <!-- /.container-fluid -->
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; Charter Reporter App 2024</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+        <!-- End of Content Wrapper -->
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Rejection Modal -->
+    <div class="modal fade rejection-modal" id="rejectModal" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectModalLabel">Reject Registration</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="rejectForm">
+                        <input type="hidden" id="rejectRequestId" />
+                        <div class="form-group">
+                            <label for="rejectionReason">Reason for Rejection <span class="text-danger">*</span></label>
+                            <textarea 
+                                class="form-control rejection-reason" 
+                                id="rejectionReason" 
+                                rows="4" 
+                                required
+                                placeholder="Please provide a detailed reason for rejection..."
+                            ></textarea>
+                            <div class="invalid-feedback">
+                                Rejection reason is required
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="AdminApproval.confirmReject()">
+                        <i class="fas fa-times mr-1"></i> Confirm Rejection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/js/sb-admin-2.min.js"></script>
+    <script src="../../wwwroot/js/site.js"></script>
+    <script src="../../wwwroot/js/modules/admin-approval.js"></script>
+</body>
+</html>

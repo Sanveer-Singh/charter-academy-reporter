@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../build/Charter.ReporterApp.Web.props" />
+</Project>

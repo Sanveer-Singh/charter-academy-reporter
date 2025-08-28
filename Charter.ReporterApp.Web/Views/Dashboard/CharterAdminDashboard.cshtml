@@ -1,0 +1,264 @@
+@{
+    ViewData["Title"] = "Charter Admin Dashboard";
+}
+
+@section Styles {
+    <link href="~/css/modules/dashboard.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="dashboard-header">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="dashboard-header__title">Charter Admin Dashboard</h1>
+            <p class="dashboard-header__subtitle">Complete overview of all enrollments, sales, and course completions</p>
+        </div>
+        <button class="btn btn-export" onclick="Dashboard.exportData()">
+            <i class="fas fa-download btn-export__icon"></i> Export Report
+        </button>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="filter-panel">
+    <div class="filter-panel__header">
+        <h2 class="filter-panel__title">Filters</h2>
+        <a href="#" class="filter-panel__reset" onclick="Dashboard.resetFilters()">Reset All</a>
+    </div>
+    <form class="filter-panel__content" id="dashboardFilters">
+        <div class="filter-group">
+            <label for="dateRange" class="filter-group__label">Date Range</label>
+            <select name="dateRange" id="dateRange" class="filter-group__control">
+                <option value="7">Last 7 Days</option>
+                <option value="30" selected>Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="365">Last Year</option>
+                <option value="custom">Custom Range</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="category" class="filter-group__label">Course Category</label>
+            <select name="category" id="category" class="filter-group__control">
+                <option value="">All Categories</option>
+                <option value="professional">Professional Development</option>
+                <option value="technical">Technical Skills</option>
+                <option value="compliance">Compliance Training</option>
+                <option value="leadership">Leadership</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="status" class="filter-group__label">Status</label>
+            <select name="status" id="status" class="filter-group__control">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fas fa-filter"></i> Apply Filters
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Metrics Row -->
+<div class="dashboard-grid">
+    <!-- Total Enrollments -->
+    <div class="card metric-card" data-metric="enrollments">
+        <div class="card-body">
+            <div class="metric-card__header">
+                <h3 class="metric-card__title">Total Enrollments</h3>
+                <i class="fas fa-user-graduate metric-card__icon"></i>
+            </div>
+            <div class="metric-card__value">12,456</div>
+            <div class="metric-card__change metric-card__change--positive">
+                <i class="fas fa-arrow-up metric-card__change-icon"></i>
+                <span>15.3% from last month</span>
+            </div>
+            <div class="metric-card__period">Last 30 days</div>
+        </div>
+    </div>
+    
+    <!-- Total Sales -->
+    <div class="card metric-card metric-card--success" data-metric="sales">
+        <div class="card-body">
+            <div class="metric-card__header">
+                <h3 class="metric-card__title">Total Sales</h3>
+                <i class="fas fa-dollar-sign metric-card__icon"></i>
+            </div>
+            <div class="metric-card__value">R1,245,678</div>
+            <div class="metric-card__change metric-card__change--positive">
+                <i class="fas fa-arrow-up metric-card__change-icon"></i>
+                <span>8.7% from last month</span>
+            </div>
+            <div class="metric-card__period">Last 30 days</div>
+        </div>
+    </div>
+    
+    <!-- Completions -->
+    <div class="card metric-card metric-card--info" data-metric="completions">
+        <div class="card-body">
+            <div class="metric-card__header">
+                <h3 class="metric-card__title">Course Completions</h3>
+                <i class="fas fa-certificate metric-card__icon"></i>
+            </div>
+            <div class="metric-card__value">8,923</div>
+            <div class="metric-card__change metric-card__change--positive">
+                <i class="fas fa-arrow-up metric-card__change-icon"></i>
+                <span>22.4% from last month</span>
+            </div>
+            <div class="metric-card__period">Last 30 days</div>
+        </div>
+    </div>
+    
+    <!-- Completion Rate -->
+    <div class="card metric-card metric-card--warning" data-metric="completionRate">
+        <div class="card-body">
+            <div class="metric-card__header">
+                <h3 class="metric-card__title">Completion Rate</h3>
+                <i class="fas fa-percentage metric-card__icon"></i>
+            </div>
+            <div class="metric-card__value">71.6%</div>
+            <div class="metric-card__change metric-card__change--negative">
+                <i class="fas fa-arrow-down metric-card__change-icon"></i>
+                <span>2.1% from last month</span>
+            </div>
+            <div class="metric-card__period">Last 30 days</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <!-- Enrollment Trends Chart -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="chart-container">
+            <div class="chart-container__header">
+                <h3 class="chart-container__title">Enrollment Trends</h3>
+                <div class="chart-container__actions">
+                    <button class="chart-container__action chart-container__action--active" data-period="daily">Daily</button>
+                    <button class="chart-container__action" data-period="weekly">Weekly</button>
+                    <button class="chart-container__action" data-period="monthly">Monthly</button>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="enrollmentChart"></canvas>
+            </div>
+            <div class="chart-legend" id="enrollmentLegend"></div>
+        </div>
+    </div>
+    
+    <!-- Course Distribution Chart -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="chart-container">
+            <div class="chart-container__header">
+                <h3 class="chart-container__title">Course Distribution</h3>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="distributionChart"></canvas>
+            </div>
+            <div class="chart-legend" id="distributionLegend"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalLabel">Export Dashboard Report</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="exportForm">
+                    <div class="form-group">
+                        <label for="exportFormat">Select Format</label>
+                        <select class="form-control" id="exportFormat" required>
+                            <option value="">Choose format...</option>
+                            <option value="csv">CSV (Comma Separated Values)</option>
+                            <option value="xlsx">Excel (XLSX)</option>
+                            <option value="pdf">PDF Report</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="exportData">Data to Include</label>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="includeMetrics" checked>
+                            <label class="custom-control-label" for="includeMetrics">Summary Metrics</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="includeEnrollments" checked>
+                            <label class="custom-control-label" for="includeEnrollments">Enrollment Data</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="includeSales" checked>
+                            <label class="custom-control-label" for="includeSales">Sales Data</label>
+                        </div>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="includeCompletions" checked>
+                            <label class="custom-control-label" for="includeCompletions">Completion Data</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="Dashboard.confirmExport()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="~/js/modules/dashboard.js" asp-append-version="true"></script>
+    
+    <script>
+        // Initialize dashboard with sample data
+        document.addEventListener('DOMContentLoaded', function() {
+            Dashboard.init({
+                role: '@ViewData["UserRole"]',
+                chartData: {
+                    enrollment: {
+                        labels: ['Dec 4', 'Dec 5', 'Dec 6', 'Dec 7', 'Dec 8', 'Dec 9', 'Dec 10'],
+                        datasets: [{
+                            label: 'Enrollments',
+                            data: [342, 389, 412, 376, 428, 445, 467],
+                            borderColor: 'rgb(30, 58, 138)',
+                            backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                            tension: 0.3
+                        }, {
+                            label: 'Completions',
+                            data: [256, 278, 302, 289, 315, 328, 341],
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.3
+                        }]
+                    },
+                    distribution: {
+                        labels: ['Professional', 'Technical', 'Compliance', 'Leadership', 'Other'],
+                        datasets: [{
+                            data: [35, 25, 20, 15, 5],
+                            backgroundColor: [
+                                'rgb(30, 58, 138)',
+                                'rgb(59, 130, 246)',
+                                'rgb(245, 158, 11)',
+                                'rgb(16, 185, 129)',
+                                'rgb(156, 163, 175)'
+                            ]
+                        }]
+                    }
+                }
+            });
+        });
+    </script>
+}
