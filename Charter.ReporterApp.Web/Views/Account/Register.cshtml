@@ -1,0 +1,179 @@
+@model Charter.ReporterApp.Application.DTOs.RegisterDto
+@{
+    ViewData["Title"] = "Register";
+    Layout = "_LoginLayout";
+}
+
+<div class="auth-container">
+    <div class="auth-card" style="max-width: 600px;">
+        <div class="auth-form">
+            <div class="auth-form__header">
+                <div class="auth-form__logo">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h1 class="auth-form__title">Create an Account</h1>
+                <p class="auth-form__subtitle">Join Charter Reporter to access powerful reporting tools</p>
+            </div>
+
+            <form asp-action="Register" method="post" class="needs-validation" novalidate>
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <!-- Personal Information Section -->
+                <div class="registration-form__section">
+                    <h2 class="registration-form__section-title">Personal Information</h2>
+                    
+                    <div class="form-group">
+                        <label asp-for="FullName" class="form-label">
+                            Full Name <span class="required-indicator">*</span>
+                        </label>
+                        <input asp-for="FullName" class="form-control" placeholder="Enter your full name" 
+                               autocomplete="name" />
+                        <span asp-validation-for="FullName" class="invalid-feedback"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Email" class="form-label">
+                            Email Address <span class="required-indicator">*</span>
+                        </label>
+                        <input asp-for="Email" class="form-control" placeholder="Enter your email address" 
+                               autocomplete="email" />
+                        <span asp-validation-for="Email" class="invalid-feedback"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="IdNumber" class="form-label">
+                            ID Number <span class="required-indicator">*</span>
+                        </label>
+                        <input asp-for="IdNumber" class="form-control" placeholder="Enter your 13-digit ID number" 
+                               maxlength="13" />
+                        <span asp-validation-for="IdNumber" class="invalid-feedback"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="PhoneNumber" class="form-label">
+                            Phone Number <span class="required-indicator">*</span>
+                        </label>
+                        <input asp-for="PhoneNumber" class="form-control" placeholder="Enter your phone number" 
+                               autocomplete="tel" />
+                        <span asp-validation-for="PhoneNumber" class="invalid-feedback"></span>
+                    </div>
+                </div>
+
+                <!-- Organization Information Section -->
+                <div class="registration-form__section">
+                    <h2 class="registration-form__section-title">Organization Details</h2>
+                    
+                    <div class="form-group">
+                        <label asp-for="Organization" class="form-label">
+                            Organization <span class="required-indicator">*</span>
+                        </label>
+                        <input asp-for="Organization" class="form-control" placeholder="Enter your organization name" 
+                               autocomplete="organization" />
+                        <span asp-validation-for="Organization" class="invalid-feedback"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Address" class="form-label">
+                            Address <span class="required-indicator">*</span>
+                        </label>
+                        <textarea asp-for="Address" class="form-control" placeholder="Enter your complete address" 
+                                  rows="3" autocomplete="street-address"></textarea>
+                        <span asp-validation-for="Address" class="invalid-feedback"></span>
+                    </div>
+                </div>
+
+                <!-- Role Selection Section -->
+                <div class="registration-form__section">
+                    <h2 class="registration-form__section-title">Select Your Role</h2>
+                    
+                    <div class="role-selector">
+                        <label class="role-card">
+                            <input type="radio" asp-for="RequestedRole" value="Charter-Admin" />
+                            <div class="role-card__content">
+                                <div class="role-card__icon">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <div class="role-card__name">Charter Admin</div>
+                                <div class="role-card__description">
+                                    Full system access with approval rights
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="role-card">
+                            <input type="radio" asp-for="RequestedRole" value="Rebosa-Admin" />
+                            <div class="role-card__content">
+                                <div class="role-card__icon">
+                                    <i class="fas fa-user-cog"></i>
+                                </div>
+                                <div class="role-card__name">Rebosa Admin</div>
+                                <div class="role-card__description">
+                                    Access to Rebosa-specific reports
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="role-card">
+                            <input type="radio" asp-for="RequestedRole" value="PPRA-Admin" />
+                            <div class="role-card__content">
+                                <div class="role-card__icon">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <div class="role-card__name">PPRA Admin</div>
+                                <div class="role-card__description">
+                                    Access to PPRA CPD reports
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    <span asp-validation-for="RequestedRole" class="text-danger"></span>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="form-group">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="terms" name="terms" required>
+                        <label class="custom-control-label" for="terms">
+                            I agree to the <a href="#" class="auth-form__link">Terms and Conditions</a>
+                        </label>
+                        <div class="invalid-feedback">
+                            You must agree to the terms and conditions.
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-form__submit">
+                    Create Account
+                </button>
+
+                <div class="auth-form__divider">
+                    <span>Already have an account?</span>
+                </div>
+
+                <a asp-action="Login" class="btn btn-outline-primary btn-block">
+                    Sign In
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Handle role card selection
+        document.querySelectorAll('.role-card input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Remove selected class from all cards
+                document.querySelectorAll('.role-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                // Add selected class to parent card
+                if (this.checked) {
+                    this.closest('.role-card').classList.add('selected');
+                }
+            });
+        });
+    </script>
+}

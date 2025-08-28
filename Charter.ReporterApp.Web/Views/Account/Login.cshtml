@@ -1,0 +1,100 @@
+@model Charter.ReporterApp.Application.DTOs.LoginDto
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_LoginLayout";
+}
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="row no-gutters">
+            <!-- Left Panel - Login Form -->
+            <div class="col-lg-6">
+                <div class="auth-form">
+                    <div class="auth-form__header">
+                        <div class="auth-form__logo">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h1 class="auth-form__title">Welcome Back</h1>
+                        <p class="auth-form__subtitle">Sign in to your account to continue</p>
+                    </div>
+
+                    <form asp-action="Login" method="post" class="needs-validation" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <div class="form-group">
+                            <label asp-for="Email" class="form-label">
+                                Email Address <span class="required-indicator">*</span>
+                            </label>
+                            <div class="input-icon">
+                                <i class="fas fa-envelope input-icon__icon"></i>
+                                <input asp-for="Email" class="form-control" placeholder="Enter your email address" 
+                                       autocomplete="email" />
+                                <span asp-validation-for="Email" class="invalid-feedback"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Password" class="form-label">
+                                Password <span class="required-indicator">*</span>
+                            </label>
+                            <div class="input-icon">
+                                <i class="fas fa-lock input-icon__icon"></i>
+                                <input asp-for="Password" class="form-control" placeholder="Enter your password" 
+                                       autocomplete="current-password" />
+                                <span asp-validation-for="Password" class="invalid-feedback"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input asp-for="RememberMe" class="custom-control-input" />
+                                <label asp-for="RememberMe" class="custom-control-label">
+                                    Remember me
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary auth-form__submit">
+                            Sign In
+                        </button>
+
+                        <div class="auth-form__links">
+                            <a asp-action="ForgotPassword" class="auth-form__link">
+                                Forgot your password?
+                            </a>
+                        </div>
+
+                        <div class="auth-form__divider">
+                            <span>New to Charter Reporter?</span>
+                        </div>
+
+                        <a asp-action="Register" class="btn btn-outline-primary btn-block">
+                            Create an Account
+                        </a>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Panel - Info -->
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="auth-side-panel">
+                    <h2 class="auth-side-panel__title">Charter Reporter App</h2>
+                    <p class="auth-side-panel__text">
+                        Your comprehensive reporting solution for tracking enrollments, sales, and course completions.
+                    </p>
+                    <ul class="auth-side-panel__features">
+                        <li>Real-time enrollment tracking</li>
+                        <li>Sales analytics dashboard</li>
+                        <li>Course completion reports</li>
+                        <li>Role-based access control</li>
+                        <li>Export data in multiple formats</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,16 @@
+/workspace/Charter.ReporterApp.Application/bin/Debug/net8.0/Charter.ReporterApp.Application.deps.json
+/workspace/Charter.ReporterApp.Application/bin/Debug/net8.0/Charter.ReporterApp.Application.dll
+/workspace/Charter.ReporterApp.Application/bin/Debug/net8.0/Charter.ReporterApp.Application.pdb
+/workspace/Charter.ReporterApp.Application/bin/Debug/net8.0/Charter.ReporterApp.Domain.dll
+/workspace/Charter.ReporterApp.Application/bin/Debug/net8.0/Charter.ReporterApp.Domain.pdb
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/Charter.ReporterApp.Application.csproj.AssemblyReference.cache
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/Charter.ReporterApp.Application.GeneratedMSBuildEditorConfig.editorconfig
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/Charter.ReporterApp.Application.AssemblyInfoInputs.cache
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/Charter.ReporterApp.Application.AssemblyInfo.cs
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/Charter.ReporterApp.Application.csproj.CoreCompileInputs.cache
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/Charter.ReporterApp.Application.sourcelink.json
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/Charter..BB1D6397.Up2Date
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/Charter.ReporterApp.Application.dll
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/refint/Charter.ReporterApp.Application.dll
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/Charter.ReporterApp.Application.pdb
+/workspace/Charter.ReporterApp.Application/obj/Debug/net8.0/ref/Charter.ReporterApp.Application.dll
