@@ -1,0 +1,83 @@
+1. Project Overview
+Purpose
+The app enables admins to securely access and analyze data from:
+
+Moodle DB: Enrollments, completions, course views (filtered for CPD courses via category IDs/names).
+WooCommerce DB: Sales and orders, linked to Moodle via user email, ID, and PPRA Number.
+
+Focus on CPD compliance (e.g., per-user/per-year requirement of 4 courses, with emphasis on fourth-course completions).
+Scope
+
+In: Authentication, dashboards, reports/exports, filters, funnels (site landing to completion).
+Out: AI insights, offline access, data editing, integrations beyond DBs.
+
+Assumptions
+
+Small user base; no scalability needs.
+CPD cycles based on calendar/fiscal year (to be confirmed).
+Edwiser Bridge Pro handles purchase-to-enrollment mapping.
+
+
+2. Stakeholders and Roles
+The app supports three independent admin roles with RBAC:
+
+RoleDescription & ResponsibilitiesKey Metrics/AccessExpected UsersCharter AdminsOrganizational oversight; approve registrations and monitor all performance.Full funnels (sales, enrollments, completions, views) for all courses; approve/reject users; all exports.1-20REBOSA AdminsReal estate education focus; track CPD metrics.CPD-only funnels and reports (sales, enrollments, completions, views, average times, popular courses); CPD exports.1-20PPRA AdminsRegulatory compliance; verify CPD requirements.Enrollments vs. completions; recent fourth-course completions per user/year; date/year filters; limited exports.1-20
+
+Hierarchies: None—roles are siloed.
+User Journeys: Register → Approve (Charter only) → Login → Dashboard → Filter/View/Export.
+Accessibility: Mobile-responsive; WCAG 2.1 compliant; intuitive CTAs.
+
+
+3. Key Functional Requirements
+Authentication & Security
+
+Email/password with verification; recovery via email.
+Registration: Collect name, email, organization, role, ID number, cell, address.
+Approval: In-app queue for Charter Admins; email notifications.
+Security: POPI compliance; session timeouts; encryption; audit logs; no integrations.
+
+Dashboards & Visualizations
+
+Role-specific upon login.
+Charts: Bar (comparisons), line (trends), pie (breakdowns), funnel (drop-offs).
+Filters: Date ranges, course categories, years (for CPD cycles).
+Funnels: Stages include site landing/views (from logs if available), interest (add-to-cart), sales (completed orders), enrollment, course views, completion.
+Exports: XLSX/CSV (summarized/raw); role-restricted.
+PPRA-Specific: Per-user/year tracking of 4 allocated CPD courses; highlight compliance milestones.
+
+Data Integration
+
+Direct read-only queries; joins on email/ID/PPRA Number.
+CPD Filter: Based on mdl_course_categories (specific names/IDs).
+Volume: Low (few GBs); no performance concerns.
+Error Handling: Alerts for failures (e.g., DB issues).
+
+User Stories Summary
+
+Positive Paths: e.g., "As a PPRA Admin, I want year-filtered completion reports to verify CPD compliance."
+Negative Cases: e.g., Invalid login shows error; no data displays "No results"; unauthorized access redirects.
+
+Full list available in detailed requirements document.
+
+4. Technical Stack
+Prioritized for ease of implementation and alignment with preferences:
+ASP.Net core app following MVC 
+ + Entity Framework Core Handles auth ( via identities ), queries; ORM for DBs.DatabaseSQLite (app data: users/roles); MariaDB (sources)Lightweight; direct connections.DeploymentAWS EC2 t3.micro (IIS hosting)Low-cost; sufficient for scale.OtherMySQL Connector for MariaDB; Bootstrap for responsiveness.Open-source; no caching needed.
+
+Testing: Unit tests for queries/auth.
+DevOps: Basic (manual deploys); documentation included.
+
+
+5. Non-Functional Requirements
+
+Usability: Clean UI matching charteracademy.co.za colors (navy blue #003366, teal #00A896, white backgrounds); clear CTAs.
+Performance: <2s loads; handles 100 users.
+Security/Reliability: POPI; 99% uptime; alerts over fallbacks.
+Maintenance: Full docs; internal team ownership.
+
+
+6. Risks and Mitigations
+
+
+RiskLikelihoodMitigationDB Access RestrictionsLowProvide read-only credentials early.POPI Data Sharing LimitsMediumMinimize PII in exports; obtain consents if needed.Edwiser Bridge DependenciesLowValidate mappings during testing.Legacy Schema IssuesLowUse configurable prefixes in queries.
+No major constraints identified.

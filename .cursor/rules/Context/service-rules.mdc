@@ -1,0 +1,219 @@
+---
+name: Service Rules
+appliesTo:
+  - "**/Services/**/*.cs"
+triggers:
+  keywords: ["service", "business logic", "Result<T>", "validation"]
+order: 30
+---
+# SERVICE CONTEXT RULES
+
+## When working in @Services/*
+
+### IMMUTABLE SERVICE RULES
+- MUST implement interface from @Services/Interfaces/*
+- MUST return Result<T> for all public methods
+- MUST handle all exceptions internally
+- MUST validate business rules
+- MUST use async/await throughout
+- MUST log errors with context
+- MUST NOT expose implementation details
+
+### SERVICE STRUCTURE PATTERN
+USE: @Rules/MASTER-CURSORRULES.md → T1 Service Method Pattern
+FOLLOW: @Rules/Templates/service-templates.md
+
+### METHOD IMPLEMENTATION PATTERN
+USE: @Rules/MASTER-CURSORRULES.md → T1 Service Method Pattern
+
+### COMPLEX OPERATION PATTERN
+```csharp
+public async Task<Result<CpdComplianceReportDto>> GenerateCpdComplianceReportAsync(
+    int year, string userId = null)
+{
+    try
+    {
+        if (year < 2020 || year > DateTime.Now.Year)
+            return Result<CpdComplianceReportDto>.Failure("Invalid year");
+
+        using var transaction = await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            var enrollments = await _unitOfWork.Courses.GetCpdEnrollmentsAsync(year, userId);
+            var completions = await _unitOfWork.Courses.GetCpdCompletionsAsync(year, userId);
+            var users = await _unitOfWork.Users.GetActiveUsersAsync(userId);
+
+            var complianceData = CalculateCompliance(enrollments, completions, users);
+
+            var report = new CpdComplianceReportDto
+            {
+                Year = year,
+                GeneratedAt = DateTime.UtcNow,
+                TotalUsers = users.Count(),
+                CompliantUsers = complianceData.CompliantCount,
+                ComplianceRate = complianceData.CompliancePercentage,
+                UserDetails = BuildUserComplianceDetails(complianceData)
+            };
+
+            await _auditService.LogReportGenerationAsync(
+                "CPD_COMPLIANCE",
+                new { year, userId });
+
+            await _unitOfWork.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return Result<CpdComplianceReportDto>.Success(report);
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex,
+            "Error generating CPD compliance report for year {Year}, user {UserId}",
+            year, userId);
+        return Result<CpdComplianceReportDto>.Failure("Failed to generate compliance report");
+    }
+}
+```
+
+### VALIDATION PATTERN
+```csharp
+public async Task<Result<int>> CreateReportAsync(CreateReportDto dto)
+{
+    try
+    {
+        // 1. DTO validation
+        var validationResult = await _validator.ValidateAsync(dto);
+        if (!validationResult.IsValid)
+        {
+            var errors = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
+            return Result<int>.Failure($"Validation failed: {errors}");
+        }
+        
+        // 2. Business rule validation
+        var businessValidation = await ValidateBusinessRulesAsync(dto);
+        if (!businessValidation.IsValid)
+            return Result<int>.Failure(businessValidation.ErrorMessage);
+        
+        // 3. Proceed with creation
+        var entity = _mapper.Map<Report>(dto);
+        var created = await _reportRepository.AddAsync(entity);
+        
+        return Result<int>.Success(created.Id);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error creating report");
+        return Result<int>.Failure("Failed to create report");
+    }
+}
+
+private async Task<ValidationResult> ValidateBusinessRulesAsync(CreateReportDto dto)
+{
+    // Check for duplicates
+    if (await _reportRepository.ExistsAsync(r => r.Name == dto.Name))
+        return ValidationResult.Failure("A report with this name already exists");
+    
+    // Check dependencies
+    if (!await _courseRepository.ExistsAsync(c => c.Id == dto.CourseId))
+        return ValidationResult.Failure("Invalid course selected");
+    
+    return ValidationResult.Success();
+}
+```
+
+### ERROR HANDLING PATTERNS
+```csharp
+// Specific exception types
+public class BusinessRuleException : Exception
+{
+    public BusinessRuleException(string message) : base(message) { }
+}
+
+// Service method with typed exceptions
+public async Task<Result<T>> ProcessAsync(RequestDto request)
+{
+    try
+    {
+        // Business logic
+    }
+    catch (BusinessRuleException ex)
+    {
+        // Expected business errors - return failure
+        return Result<T>.Failure(ex.Message);
+    }
+    catch (DbUpdateException ex)
+    {
+        // Database errors - log and return generic message
+        _logger.LogError(ex, "Database error in ProcessAsync");
+        return Result<T>.Failure("A database error occurred");
+    }
+    catch (Exception ex)
+    {
+        // Unexpected errors - log with full context
+        _logger.LogError(ex, 
+            "Unexpected error in ProcessAsync for request {@Request}", 
+            request);
+        return Result<T>.Failure("An unexpected error occurred");
+    }
+}
+```
+
+### PAGINATION PATTERN
+```csharp
+public async Task<Result<PagedResult<ReportListDto>>> GetReportsAsync(
+    ReportFilterDto filter)
+{
+    try
+    {
+        // Build query
+        var query = _reportRepository.GetQueryable();
+        
+        // Apply filters
+        if (filter.StartDate.HasValue)
+            query = query.Where(r => r.CreatedAt >= filter.StartDate.Value);
+        
+        if (!string.IsNullOrEmpty(filter.SearchTerm))
+            query = query.Where(r => r.Name.Contains(filter.SearchTerm));
+        
+        // Count before pagination
+        var totalCount = await query.CountAsync();
+        
+        // Apply pagination
+        var items = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((filter.Page - 1) * filter.PageSize)
+            .Take(filter.PageSize)
+            .ProjectTo<ReportListDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+        
+        var result = new PagedResult<ReportListDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = filter.Page,
+            PageSize = filter.PageSize
+        };
+        
+        return Result<PagedResult<ReportListDto>>.Success(result);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving reports with filter {@Filter}", filter);
+        return Result<PagedResult<ReportListDto>>.Failure("Failed to retrieve reports");
+    }
+}
+```
+
+### TESTING CONSIDERATIONS
+- Mock all dependencies (repositories, external services)
+- Test both success and failure paths
+- Verify Result<T> returns correct success/failure
+- Test validation logic thoroughly
+- Ensure exceptions are handled and logged
+- Test pagination edge cases
+- Verify transaction rollback on errors
+

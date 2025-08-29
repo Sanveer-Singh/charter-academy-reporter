@@ -1,0 +1,12 @@
+---
+name: Service Templates
+appliesTo:
+  - "**/Services/**/*.cs"
+triggers:
+  keywords: ["scaffold service", "create service", "Result<T>"]
+order: 91
+---
+# SERVICE TEMPLATES (Index)
+
+Use concrete patterns from @Rules/Templates/service-templates.md. Load only the target service and its interface, plus repository interfaces.
+

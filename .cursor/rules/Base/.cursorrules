@@ -1,0 +1,256 @@
+# Charter Reporter Web - Base Cursor Rules
+
+## 1. CONTEXT DECLARATION
+
+### Tech Stack
+- PRIMARY: ASP.NET Core MVC (v8.0)
+- DATABASE: SQLite (app data) + MariaDB (source data) via EF Core
+- FRONTEND: SB Admin 2 template with Bootstrap
+- HOSTING: AWS EC2 t3.micro with IIS
+- AUTH: ASP.NET Core Identity with RBAC
+- ORM: Entity Framework Core with Repository Pattern
+
+### Project Context
+- PURPOSE: CPD compliance reporting for Charter Academy
+- USERS: Small admin base (1-20 per role)
+- ROLES: Charter Admins, REBOSA Admins, PPRA Admins
+- FOCUS: Read-only reporting, no data editing
+
+## 2. IMMUTABLE PRINCIPLES
+
+### MUST Requirements
+- MUST use async/await for ALL database operations
+- MUST implement Repository pattern for data access
+- MUST NOT expose Entity models directly to Views
+- MUST use ViewModels for all data transfer
+- MUST implement RBAC for all controllers/actions
+- MUST validate all inputs server-side
+- MUST use parameterized queries (no SQL injection)
+- MUST follow Clean Architecture layers
+- MUST implement early return patterns
+- MUST use meaningful variable names (even in LINQ)
+- MUST handle all exceptions gracefully
+- MUST NOT use client-side data processing
+- MUST ensure mobile responsiveness (rem/% based)
+- MUST maintain WCAG 2.1 accessibility compliance
+- MUST implement POPI compliance for data handling
+
+### Architecture Boundaries
+```
+Controllers → Services → Repositories → DbContext
+    ↓           ↓           ↓            ↓
+ViewModels   DTOs      Entities    Database
+```
+- NEVER skip layers (e.g., Controller → Repository)
+- NEVER mix concerns between layers
+- NEVER use Entity models in Views
+
+### Security Requirements
+- MUST prevent OWASP Top 10 vulnerabilities
+- MUST use antiforgery tokens on all forms
+- MUST implement proper session management
+- MUST log security events to audit trail
+- MUST encrypt sensitive data at rest
+- MUST use HTTPS for all communications
+
+## 3. CONTEXTUAL RULES
+
+### When working in @Controllers/*
+- Reference: @Models/ViewModels/* for data transfer
+- Pattern: Thin controllers, business logic in services
+- Validation: ModelState + service layer validation
+- Authorization: [Authorize(Roles = "...")] attributes
+- Error Handling: Global exception handler + local try-catch
+- Return Types: IActionResult for views, Task<IActionResult> for async
+
+### When working in @Services/*
+- Reference: @Services/Interfaces/* for contracts
+- Pattern: Single responsibility per service
+- Dependencies: Inject via constructor (DI)
+- Business Rules: Centralize here, not in controllers
+- Validation: FluentValidation or custom validators
+- Return: Result<T> pattern for success/failure
+
+### When working in @Data/Repositories/*
+- MUST return IQueryable for composable queries
+- MUST NOT materialize collections prematurely (.ToList())
+- Reference: @Data/Entities/* for model definitions
+- Pattern: Generic repository + specific repositories
+- Joins: Use Include() for eager loading
+- Filtering: Build expressions, don't concatenate SQL
+
+### When working in @Views/*
+- Reference: @Models/ViewModels/* for strongly-typed views
+- Pattern: Razor syntax with SB Admin 2 components
+- Styling: Use site.css for global, module.css for specific
+- Mobile: Bootstrap grid system, rem units
+- Accessibility: Proper ARIA labels, semantic HTML
+- JavaScript: Minimal, prefer server-side rendering
+
+## 4. CODING STANDARDS
+
+### Clean Code Principles
+```csharp
+// GOOD: Early return pattern
+public async Task<Result<UserDto>> GetUserAsync(int id)
+{
+    if (id <= 0)
+        return Result<UserDto>.Failure("Invalid user ID");
+    
+    var user = await _repository.GetByIdAsync(id);
+    if (user == null)
+        return Result<UserDto>.Failure("User not found");
+    
+    return Result<UserDto>.Success(_mapper.Map<UserDto>(user));
+}
+
+// BAD: Nested conditionals
+public async Task<UserDto> GetUser(int id)
+{
+    if (id > 0)
+    {
+        var user = await _repository.GetByIdAsync(id);
+        if (user != null)
+        {
+            return _mapper.Map<UserDto>(user);
+        }
+    }
+    return null;
+}
+```
+
+### SOLID Principles Application
+- S: One service per business domain
+- O: Use interfaces for extensibility
+- L: ViewModels inherit from base classes properly
+- I: Specific interfaces over generic ones
+- D: Depend on abstractions (interfaces)
+
+### Constants and Enums
+```csharp
+// @Constants/AppConstants.cs
+public static class AppConstants
+{
+    public static class Roles
+    {
+        public const string CharterAdmin = "Charter Admin";
+        public const string RebosaAdmin = "REBOSA Admin";
+        public const string PpraAdmin = "PPRA Admin";
+    }
+    
+    public static class CpdRequirements
+    {
+        public const int RequiredCoursesPerYear = 4;
+        public const string ComplianceYear = "Calendar";
+    }
+}
+
+// @Enums/CourseStatus.cs
+public enum CourseStatus
+{
+    NotStarted = 0,
+    InProgress = 1,
+    Completed = 2,
+    Expired = 3
+}
+```
+
+## 5. UI/UX GUIDELINES
+
+### Theme Colors (from charteracademy.co.za)
+```css
+:root {
+    --primary-navy: #003366;
+    --secondary-teal: #00A896;
+    --background-white: #FFFFFF;
+    --text-dark: #212529;
+    --text-light: #6C757D;
+    --success: #28A745;
+    --warning: #FFC107;
+    --danger: #DC3545;
+}
+```
+
+### Accessibility Requirements
+- Color contrast: WCAG AA minimum (4.5:1 for normal text)
+- Focus indicators: Visible on all interactive elements
+- Screen reader: Proper ARIA labels and landmarks
+- Keyboard navigation: All features accessible via keyboard
+- Form labels: Associated with inputs properly
+
+### Mobile Responsiveness
+```css
+/* Use rem for scalable units */
+.container { padding: 1rem; }
+
+/* Use percentage for layouts */
+.sidebar { width: 25%; }
+.content { width: 75%; }
+
+/* Use Bootstrap breakpoints */
+@media (max-width: 768px) {
+    .sidebar { width: 100%; }
+    .content { width: 100%; }
+}
+```
+
+## 6. PERFORMANCE OPTIMIZATION
+
+### Database Queries
+- Use projection to select only needed columns
+- Implement pagination for large datasets
+- Use AsNoTracking() for read-only queries
+- Avoid caching unless explicitly required by a feature
+- Batch operations where possible
+
+### Code Optimization
+- Minimize method surface area (KISS)
+- Remove unused code immediately
+- Mark deprecated code clearly
+- Use async/await properly (no .Result)
+- Avoid N+1 query problems
+
+## 7. TESTING REQUIREMENTS
+
+### Unit Tests
+- Prioritize tests for authentication, repository queries, and export redaction
+- Mock repository dependencies
+- Test edge cases and error paths
+- Use xUnit + FluentAssertions
+
+### Integration Tests
+- Test controller actions with RBAC
+- Verify authorization works
+- Test database operations and joins (Moodle/WooCommerce via Edwiser mapping)
+- Validate view models
+
+## 8. DOCUMENTATION
+
+### Code Documentation
+```csharp
+/// <summary>
+/// Retrieves CPD completion report for a specific year
+/// </summary>
+/// <param name="year">The calendar year for the report</param>
+/// <param name="userId">Optional user filter</param>
+/// <returns>CPD compliance report with completion metrics</returns>
+public async Task<Result<CpdReportDto>> GetCpdReportAsync(int year, int? userId = null)
+```
+
+### README Requirements
+- Setup instructions
+- Database configuration
+- Deployment steps
+- Troubleshooting guide
+
+## CONFLICT RESOLUTION
+Priority Order (highest first):
+1. Security requirements (MUST validate, MUST authorize)
+2. Data integrity (MUST use transactions, MUST validate FK)
+3. Accessibility (MUST be WCAG compliant)
+4. Performance (minimize queries; avoid caching unless explicitly required)
+5. Code style (PREFER early returns, PREFER LINQ methods)
+
+### Example Resolution:
+// If performance suggests materialized view but security requires real-time data:
+// → Security wins: Use real-time query with proper caching strategy

@@ -1,0 +1,18 @@
+---
+name: CPD Compliance Router
+appliesTo:
+  - "**/Services/**/*.cs"
+  - "**/Controllers/**/*.cs"
+triggers:
+  keywords: ["CPD", "compliance", "fourth-course", "year filter", "PPRA", "REBOSA"]
+order: 15
+---
+# CPD COMPLIANCE ROUTER
+
+Load only: service(s) and controller(s) in scope, relevant ViewModels, and repository interfaces used by the service.
+
+Source of truth: @Constants/AppConstants.cs → CpdRequirements
+Also respect Edwiser Bridge mapping for Moodle↔WooCommerce joins (email, user ID, PPRA Number).
+
+See @Rules/MASTER-CURSORRULES.mdc → Context-Aware Loading (CPD/compliance).
+

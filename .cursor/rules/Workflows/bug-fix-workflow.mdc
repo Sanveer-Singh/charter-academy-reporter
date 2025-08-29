@@ -1,0 +1,38 @@
+---
+name: Bug Fix Workflow
+appliesTo:
+  - "**/*.cs"
+  - "**/*.cshtml"
+triggers:
+  keywords: ["bug", "exception", "stack trace", "fix", "hotfix", "regression"]
+order: 10
+---
+# BUG FIX WORKFLOW (Compact)
+
+Use this compact checklist to avoid context bloat. For full details, see @Rules/Workflows/bug-fix-workflow.md.
+
+## PHASES
+- TRIAGE → DIAGNOSIS → IMPLEMENTATION → TESTING → COMPLETE
+
+## LOAD MINIMALLY
+- Error location ±30 lines
+- Direct method dependencies
+- Interface/contract of the component
+- Related test file if it exists
+
+## SECURITY FIRST
+- Validate input, check authorization, CSRF/XSS/SQLi scan
+
+## FIX TEMPLATE
+```csharp
+// BUG: #{id} - {desc}
+// ROOT CAUSE: {issue}
+// FIX: {approach}
+// VERIFIED: {how}
+```
+
+## VERIFY
+- dotnet build
+- dotnet test --filter "FullyQualifiedName~{TestClass}"
+- Minimal manual checks; avoid loading entire solution context
+

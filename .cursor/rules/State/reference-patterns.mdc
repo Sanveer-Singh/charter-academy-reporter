@@ -1,0 +1,13 @@
+---
+name: Reference Patterns
+appliesTo:
+  - "**/*.cs"
+  - "**/*.cshtml"
+triggers:
+  keywords: ["pattern", "reference", "example implementation"]
+order: 6
+---
+# REFERENCE PATTERNS (Index)
+
+Load only nearby files needed to copy patterns; avoid loading entire modules. See full details in @Rules/State/reference-patterns.md.
+

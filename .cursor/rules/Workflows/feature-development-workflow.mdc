@@ -1,0 +1,28 @@
+---
+name: Feature Development Workflow
+appliesTo:
+  - "**/*.cs"
+  - "**/*.cshtml"
+  - "**/*.json"
+triggers:
+  keywords: ["feature", "implement", "add report", "new endpoint", "scaffold"]
+order: 11
+---
+# FEATURE DEVELOPMENT WORKFLOW (Compact)
+
+Compact activation to prevent bloat. For full workflow, see @Rules/Workflows/feature-development-workflow.md.
+
+## ORDER
+Database → Entities → Repository → Service → ViewModels → Controller → Views → Tests
+
+## CHECK FIRST
+- Reuse patterns: @Services/Interfaces/*, @Views/Shared/Components/*, @Constants/*
+- Load only files for the current layer + immediate neighbors
+
+## TEMPLATES
+- Use @Rules/Templates/*.md for concrete code patterns
+
+## TESTS
+- Unit: service logic and validation
+- Integration: controller RBAC, query happy-path
+
