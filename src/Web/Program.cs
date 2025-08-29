@@ -1,6 +1,28 @@
+using Microsoft.Extensions.FileProviders;
+using System.IO;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+	app.UseExceptionHandler("/Home/Error");
+	app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+// SB Admin 2 assets are copied into wwwroot at build time via MSBuild target.
+
+app.UseRouting();
+
+app.MapControllerRoute(
+	name: "default",
+	pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

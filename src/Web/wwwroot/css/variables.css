@@ -1,0 +1,45 @@
+/* Charter Reporter - Design Tokens (Site Layer) */
+:root {
+	/* Corporate palette */
+	--brand-orange: #f37021; /* R243 G112 B33 */
+	--brand-charcoal: #414141; /* R65 G65 B65 */
+	--brand-white: #ffffff; /* R255 G255 B255 */
+	--brand-grey: #6e6e6e; /* R110 G110 B110 */
+	--brand-yellow: #f99d1c; /* R249 G157 B28 */
+
+	/* Mapped tokens */
+	--charter-primary: var(--brand-orange);
+	--charter-secondary: var(--brand-charcoal);
+	--charter-accent: var(--brand-yellow);
+	--charter-bg: var(--brand-white);
+	--charter-text: var(--brand-grey);
+
+	--spacing-xs: 0.25rem;
+	--spacing-sm: 0.5rem;
+	--spacing-md: 1rem;
+	--spacing-lg: 1.5rem;
+	--spacing-xl: 2rem;
+
+	--font-size-sm: 0.875rem;
+	--font-size-base: 1rem;
+	--font-size-lg: 1.125rem;
+	--font-size-xl: 1.25rem;
+
+	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+	--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+	--transition-fast: 150ms ease-in-out;
+	--transition-base: 250ms ease-in-out;
+	--transition-slow: 350ms ease-in-out;
+}
+
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--charter-primary: #ff8a3d;
+		--charter-text: #e5e7eb;
+	}
+}
+

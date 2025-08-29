@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+	<title>@ViewData["Title"] - Charter Reporter</title>
+
+	<style>
+		/* Corporate typography: prefer Gotham if available, fall back to Arial */
+		body { font-family: Gotham, Arial, Helvetica, sans-serif; }
+	</style>
+
+	<link rel="stylesheet" href="~/vendor/fontawesome-free/css/all.min.css" />
+
+	<link rel="stylesheet" href="~/css/sb-admin-2.min.css" />
+	<link rel="stylesheet" href="~/css/variables.css" />
+	<link rel="stylesheet" href="~/css/site.css" />
+
+	@RenderSection("Styles", required: false)
+</head>
+<body id="page-top">
+	<a class="skip-link" href="#main-content">Skip to main content</a>
+	<div id="wrapper">
+		<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+			<a class="sidebar-brand d-flex align-items-center justify-content-center" asp-controller="Home" asp-action="Index">
+				<div class="sidebar-brand-icon rotate-n-15">
+					<i class="fas fa-laugh-wink"></i>
+				</div>
+				<div class="sidebar-brand-text mx-3">Charter <sup>Admin</sup></div>
+			</a>
+			<hr class="sidebar-divider my-0" />
+			<li class="nav-item active">
+				<a class="nav-link" asp-controller="Home" asp-action="Index"><i class="fas fa-fw fa-tachometer-alt"></i><span>Dashboard</span></a>
+			</li>
+			<hr class="sidebar-divider d-none d-md-block" />
+			<div class="text-center d-none d-md-inline">
+				<button class="rounded-circle border-0" id="sidebarToggle"></button>
+			</div>
+		</ul>
+
+		<div id="content-wrapper" class="d-flex flex-column">
+			<div id="content">
+				<nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+					<button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+						<i class="fa fa-bars"></i>
+					</button>
+					<ul class="navbar-nav ml-auto">
+						<li class="nav-item dropdown no-arrow">
+							<a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								<span class="mr-2 d-none d-lg-inline text-gray-600 small">Admin</span>
+								<i class="fas fa-user-circle fa-lg"></i>
+							</a>
+						</li>
+					</ul>
+				</nav>
+
+				<main id="main-content" class="container-fluid">
+					@RenderBody()
+				</main>
+			</div>
+
+			<footer class="sticky-footer bg-white">
+				<div class="container my-auto">
+					<div class="copyright text-center my-auto">
+						<span>&copy; Charter Reporter @DateTime.UtcNow.Year</span>
+					</div>
+				</div>
+			</footer>
+		</div>
+	</div>
+
+	<a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>
+
+	<script src="~/vendor/jquery/jquery.min.js"></script>
+	<script src="~/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+	<script src="~/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+	<script src="~/js/sb-admin-2.min.js"></script>
+
+	@RenderSection("Scripts", required: false)
+</body>
+</html>
+

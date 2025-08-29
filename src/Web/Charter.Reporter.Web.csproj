@@ -11,4 +11,28 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+
+  <ItemGroup>
+    <SbVendor Include="$(MSBuildProjectDirectory)\..\..\startbootstrap-sb-admin-2-gh-pages\vendor\**\*.*" />
+    <SbCss Include="$(MSBuildProjectDirectory)\..\..\startbootstrap-sb-admin-2-gh-pages\css\**\*.*" />
+    <SbJs Include="$(MSBuildProjectDirectory)\..\..\startbootstrap-sb-admin-2-gh-pages\js\**\*.*" />
+    <SbImg Include="$(MSBuildProjectDirectory)\..\..\startbootstrap-sb-admin-2-gh-pages\img\**\*.*" />
+  </ItemGroup>
+
+  <Target Name="CopySbAdminAssets" AfterTargets="Build">
+    <PropertyGroup>
+      <WebRoot>$(MSBuildProjectDirectory)\wwwroot</WebRoot>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(WebRoot)\vendor" />
+    <MakeDir Directories="$(WebRoot)\css" />
+    <MakeDir Directories="$(WebRoot)\js" />
+    <MakeDir Directories="$(WebRoot)\img" />
+
+    <Copy SourceFiles="@(SbVendor)" DestinationFolder="$(WebRoot)\vendor\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SbCss)" DestinationFolder="$(WebRoot)\css\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SbJs)" DestinationFolder="$(WebRoot)\js\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(SbImg)" DestinationFolder="$(WebRoot)\img\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>
