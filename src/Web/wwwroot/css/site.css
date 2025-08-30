@@ -38,6 +38,18 @@ body {
 a, .btn-link { color: var(--charter-primary); }
 a:hover, .btn-link:hover { color: #c35619; }
 
+/* Improve contrast in light navbar contexts */
+.navbar-light .navbar-nav .nav-link,
+.navbar-light .navbar-brand,
+.navbar-light .nav-link {
+	color: rgba(0, 0, 0, 0.8) !important;
+}
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-light .navbar-brand:hover,
+.navbar-light .nav-link:hover {
+	color: rgba(0, 0, 0, 0.95) !important;
+}
+
 /* Sidebar and topbar tweaks for brand */
 .sidebar .nav-item.active .nav-link, .topbar .nav-link:focus-visible { outline: 2px solid var(--charter-accent); }
 

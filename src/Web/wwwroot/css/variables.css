@@ -5,6 +5,9 @@
 	--brand-charcoal: #414141; /* R65 G65 B65 */
 	--brand-white: #ffffff; /* R255 G255 B255 */
 	--brand-grey: #6e6e6e; /* R110 G110 B110 */
+	/* High-contrast neutrals */
+	--brand-text-strong: #1f2937; /* slate-800 */
+	--brand-text-strong-dark: #f3f4f6; /* gray-100 */
 	--brand-yellow: #f99d1c; /* R249 G157 B28 */
 
 	/* Mapped tokens */
@@ -12,7 +15,8 @@
 	--charter-secondary: var(--brand-charcoal);
 	--charter-accent: var(--brand-yellow);
 	--charter-bg: var(--brand-white);
-	--charter-text: var(--brand-grey);
+	/* Use stronger default text for better contrast on light backgrounds */
+	--charter-text: var(--brand-text-strong);
 
 	--spacing-xs: 0.25rem;
 	--spacing-sm: 0.5rem;
@@ -39,7 +43,8 @@
 @media (prefers-color-scheme: dark) {
 	:root {
 		--charter-primary: #ff8a3d;
-		--charter-text: #e5e7eb;
+		/* Brighter text in dark mode for contrast */
+		--charter-text: var(--brand-text-strong-dark);
 	}
 }
 
