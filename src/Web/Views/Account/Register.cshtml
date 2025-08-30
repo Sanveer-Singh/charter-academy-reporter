@@ -1,0 +1,87 @@
+@model Charter.Reporter.Web.Controllers.AccountController.RegisterVm
+@{
+    ViewData["Title"] = "Register";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Register</h6>
+            </div>
+            <div class="card-body">
+                <form asp-action="Register" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="FirstName"></label>
+                            <input asp-for="FirstName" class="form-control" aria-required="true" />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label asp-for="LastName"></label>
+                            <input asp-for="LastName" class="form-control" aria-required="true" />
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Email"></label>
+                        <input asp-for="Email" class="form-control" aria-required="true" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Organization"></label>
+                        <input asp-for="Organization" class="form-control" aria-required="true" />
+                        <span asp-validation-for="Organization" class="text-danger"></span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Role"></label>
+                            <select asp-for="Role" class="form-control" aria-required="true">
+                                <option value="">Select a role</option>
+                                <option value="CharterAdmin">Charter Admin</option>
+                                <option value="RebosaAdmin">REBOSA Admin</option>
+                                <option value="PpraAdmin">PPRA Admin</option>
+                            </select>
+                            <span asp-validation-for="Role" class="text-danger"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label asp-for="IdNumber"></label>
+                            <input asp-for="IdNumber" class="form-control" aria-required="true" />
+                            <span asp-validation-for="IdNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Cell"></label>
+                            <input asp-for="Cell" class="form-control" aria-required="true" />
+                            <span asp-validation-for="Cell" class="text-danger"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label asp-for="Address"></label>
+                            <input asp-for="Address" class="form-control" aria-required="true" />
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Password"></label>
+                            <input asp-for="Password" class="form-control" aria-required="true" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label asp-for="ConfirmPassword"></label>
+                            <input asp-for="ConfirmPassword" class="form-control" aria-required="true" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                    <a class="btn btn-link ml-2" asp-controller="Account" asp-action="Login" aria-label="Already have an account? Sign in">Already have an account? Sign in</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+

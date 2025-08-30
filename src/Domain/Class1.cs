@@ -1,6 +1,4 @@
 ﻿namespace Charter.Reporter.Domain;
 
-public class Class1
-{
-
-}
+// Placeholder to retain project structure. Domain logic and constants are defined in dedicated files.
+public class Class1 { }

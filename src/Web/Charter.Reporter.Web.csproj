@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Application\Charter.Reporter.Application.csproj" />
+    <ProjectReference Include="..\Infrastructure\Charter.Reporter.Infrastructure.csproj" />
     <ProjectReference Include="..\Shared\Charter.Reporter.Shared.csproj" />
   </ItemGroup>
 
@@ -17,6 +18,12 @@
     <SbCss Include="$(MSBuildProjectDirectory)\..\..\startbootstrap-sb-admin-2-gh-pages\css\**\*.*" />
     <SbJs Include="$(MSBuildProjectDirectory)\..\..\startbootstrap-sb-admin-2-gh-pages\js\**\*.*" />
     <SbImg Include="$(MSBuildProjectDirectory)\..\..\startbootstrap-sb-admin-2-gh-pages\img\**\*.*" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.8" />
   </ItemGroup>
 
   <Target Name="CopySbAdminAssets" AfterTargets="Build">

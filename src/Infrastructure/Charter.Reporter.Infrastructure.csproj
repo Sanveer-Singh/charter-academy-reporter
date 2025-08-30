@@ -2,7 +2,20 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain\Charter.Reporter.Domain.csproj" />
+    <ProjectReference Include="..\Application\Charter.Reporter.Application.csproj" />
     <ProjectReference Include="..\Shared\Charter.Reporter.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.18" />
+    <PackageReference Include="MySqlConnector" Version="2.4.0" />
+    <PackageReference Include="SendGrid" Version="9.29.3" />
   </ItemGroup>
 
   <PropertyGroup>

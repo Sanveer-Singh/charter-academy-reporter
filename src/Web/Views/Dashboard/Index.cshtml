@@ -1,0 +1,392 @@
+@model Charter.Reporter.Web.Models.DashboardVm
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+    <a asp-controller="Export" asp-action="CsvSample" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-download fa-sm text-white-50"></i> Export CSV</a>
+ </div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form id="filters" class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+                <label for="preset" class="form-label">Date range</label>
+                <select id="preset" name="preset" class="form-control">
+                    <option value="last-month">Last month</option>
+                    <option value="last-3-months" selected>Last 3 months</option>
+                    <option value="last-6-months">Last 6 months</option>
+                    <option value="1-year">1 year</option>
+                    <option value="all-time">All time</option>
+                    <option value="custom">Custom…</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label for="from" class="form-label">From</label>
+                <input id="from" name="from" type="date" class="form-control" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label for="to" class="form-label">To</label>
+                <input id="to" name="to" type="date" class="form-control" />
+            </div>
+            @if (Model.IsCharterAdmin)
+            {
+                <div class="col-12 col-md-3">
+                    <label for="categoryId" class="form-label">Course category</label>
+                    <select id="categoryId" name="categoryId" class="form-control">
+                        <option value="">All categories</option>
+                        @if (Model.Categories != null)
+                        {
+                            foreach (var c in Model.Categories)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+            }
+            <div class="col-12 col-md-2 mt-3 mt-md-0">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter"></i> Apply</button>
+            </div>
+        </form>
+    </div>
+ </div>
+
+<div class="row">
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Sales</div>
+                        <div id="kpi-sales" class="h5 mb-0 font-weight-bold text-gray-800">@Model.SalesTotal.ToString("C")</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Enrollments</div>
+                        <div id="kpi-enroll" class="h5 mb-0 font-weight-bold text-gray-800">@Model.EnrollmentCount</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Completions</div>
+                        <div id="kpi-complete" class="h5 mb-0 font-weight-bold text-gray-800">@Model.CompletionCount</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+        <div class="h6 m-0">Moodle Student Completion Report</div>
+        <div class="d-flex gap-2 align-items-center w-100 w-md-auto">
+            <input id="report-search" type="text" class="form-control" placeholder="Search name, email, course, category, PPRA, ID" />
+            <select id="report-page-size" class="form-control" style="max-width: 120px;">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+            <button id="report-search-btn" class="btn btn-outline-primary"><i class="fas fa-search"></i></button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 60vh; overflow:auto;">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light" style="position: sticky; top: 0; z-index: 1;">
+                    <tr>
+                        <th scope="col" data-sort="lastname">Last Name</th>
+                        <th scope="col" data-sort="firstname">First Name</th>
+                        <th scope="col" data-sort="email">Email</th>
+                        <th scope="col" data-sort="ppraNo">PPRA no</th>
+                        <th scope="col" data-sort="idNo">ID no</th>
+                        <th scope="col" data-sort="courseName">Course Name</th>
+                        <th scope="col" data-sort="category">Category</th>
+                        <th scope="col" data-sort="enrolmentDate">Enrolment Date</th>
+                        <th scope="col" data-sort="completionDate">Completion Date</th>
+                        <th scope="col" data-sort="fourthCompletionDate">4th Completion Date</th>
+                    </tr>
+                </thead>
+                <tbody id="report-tbody">
+                    <tr><td colspan="10" class="text-center p-4 text-muted">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+        <div id="report-count" class="text-muted">0 records</div>
+        <nav>
+            <ul id="report-pager" class="pagination mb-0"></ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const preset = document.getElementById('preset');
+        const from = document.getElementById('from');
+        const to = document.getElementById('to');
+        const form = document.getElementById('filters');
+        // Report UI elements (created below after markup is added)
+        let reportSearchInput, reportSearchBtn, reportTbody, reportPager, reportCount, reportPageSizeSel, reportSortableHeaders;
+        // Report state
+        let reportPage = 1;
+        let reportPageSize = 25;
+        let reportSortColumn = 'lastname';
+        let reportSortDesc = false;
+        let reportSearch = '';
+
+        function setCustomVisibility() {
+            const custom = preset.value === 'custom';
+            from.disabled = !custom;
+            to.disabled = !custom;
+            if (!custom) {
+                // For presets, show the computed range in the inputs for clarity
+                const range = computePresetRange(preset.value);
+                if (range) {
+                    from.value = range.from ?? '';
+                    to.value = range.to ?? '';
+                } else {
+                    from.value = '';
+                    to.value = '';
+                }
+            }
+        }
+
+        function pad(n) { return n < 10 ? '0' + n : '' + n; }
+        function fmt(d) { return d ? `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}` : ''; }
+        function startOfMonth(d) {
+            return new Date(d.getFullYear(), d.getMonth(), 1);
+        }
+        function endOfMonth(d) {
+            return new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        }
+        function computePresetRange(p) {
+            const now = new Date();
+            if (p === 'all-time') {
+                return { from: '', to: '' };
+            }
+            if (p === 'last-month') {
+                const thisMonthStart = startOfMonth(now);
+                const lastMonthStart = new Date(thisMonthStart.getFullYear(), thisMonthStart.getMonth() - 1, 1);
+                const lastMonthEnd = endOfMonth(lastMonthStart);
+                return { from: fmt(lastMonthStart), to: fmt(lastMonthEnd) };
+            }
+            if (p === 'last-3-months') {
+                const fromD = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+                return { from: fmt(fromD), to: fmt(now) };
+            }
+            if (p === 'last-6-months') {
+                const fromD = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+                return { from: fmt(fromD), to: fmt(now) };
+            }
+            if (p === '1-year' || p === 'last-year') {
+                const fromD = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+                return { from: fmt(fromD), to: fmt(now) };
+            }
+            return null;
+        }
+
+        // Initialize dates to model values
+        try {
+            const fromModel = '@(Model.FromUtc?.ToString("yyyy-MM-dd") ?? "")';
+            const toModel = '@(Model.ToUtc?.ToString("yyyy-MM-dd") ?? "")';
+            if (fromModel) from.value = fromModel;
+            if (toModel) to.value = toModel;
+        } catch(err) {}
+
+        setCustomVisibility();
+        preset.addEventListener('change', setCustomVisibility);
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const params = new URLSearchParams();
+            params.set('preset', preset.value);
+            if (preset.value === 'custom') {
+                if (from.value) params.set('from', from.value);
+                if (to.value) params.set('to', to.value);
+            }
+            const categoryEl = document.getElementById('categoryId');
+            if (categoryEl && categoryEl.value) params.set('categoryId', categoryEl.value);
+            const res = await fetch(`/Dashboard/Summary?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            const data = await res.json();
+            document.getElementById('kpi-sales').textContent = new Intl.NumberFormat(undefined, { style: 'currency', currency: (Intl.NumberFormat().resolvedOptions().currency || 'USD') }).format(data.salesTotal ?? 0);
+            document.getElementById('kpi-enroll').textContent = data.enrollmentCount ?? 0;
+            document.getElementById('kpi-complete').textContent = data.completionCount ?? 0;
+            // TODO: Update charts once charts are added to the dashboard
+            // Also refresh the Moodle report using the same filters
+            reportPage = 1;
+            await loadReport();
+        });
+
+        function buildFilterParams() {
+            const params = new URLSearchParams();
+            params.set('preset', preset.value);
+            if (preset.value === 'custom') {
+                if (from.value) params.set('from', from.value);
+                if (to.value) params.set('to', to.value);
+            }
+            const categoryEl = document.getElementById('categoryId');
+            if (categoryEl && categoryEl.value) params.set('categoryId', categoryEl.value);
+            return params;
+        }
+
+        function fmtDate(d) {
+            if (!d) return '';
+            try { return new Date(d).toLocaleString(); } catch { return ''; }
+        }
+
+        function updateSortIndicators() {
+            if (!reportSortableHeaders) return;
+            reportSortableHeaders.forEach(th => {
+                const col = th.getAttribute('data-sort');
+                const title = th.getAttribute('data-title');
+                if (col === reportSortColumn) {
+                    th.innerText = `${title} ${reportSortDesc ? '▼' : '▲'}`;
+                } else {
+                    th.innerText = title;
+                }
+            });
+        }
+
+        async function loadReport() {
+            if (!reportTbody) initReportRefs();
+            const params = buildFilterParams();
+            params.set('search', reportSearch);
+            params.set('sortColumn', reportSortColumn);
+            params.set('sortDesc', reportSortDesc ? 'true' : 'false');
+            params.set('page', String(reportPage));
+            params.set('pageSize', String(reportPageSize));
+            const res = await fetch(`/Dashboard/MoodleReport?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            const data = await res.json();
+            const items = data.items || [];
+            // Render rows
+            reportTbody.innerHTML = items.map(r => `
+                <tr>
+                    <td>${r.lastName ?? ''}</td>
+                    <td>${r.firstName ?? ''}</td>
+                    <td class="text-nowrap">${r.email ?? ''}</td>
+                    <td>${r.ppraNo ?? ''}</td>
+                    <td>${r.idNo ?? ''}</td>
+                    <td>${r.courseName ?? ''}</td>
+                    <td>${r.category ?? ''}</td>
+                    <td class="text-nowrap">${fmtDate(r.enrolmentDate)}</td>
+                    <td class="text-nowrap">${fmtDate(r.completionDate)}</td>
+                    <td class="text-nowrap">${fmtDate(r.fourthCompletionDate)}</td>
+                </tr>
+            `).join('');
+            // Count
+            const total = data.totalCount ?? 0;
+            const page = data.page ?? reportPage;
+            const pageSize = data.pageSize ?? reportPageSize;
+            reportPage = page;
+            reportPageSize = pageSize;
+            reportCount.textContent = `${total.toLocaleString()} records`;
+            // Pager
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            const pages = [];
+            const windowSize = 5;
+            let start = Math.max(1, page - Math.floor(windowSize / 2));
+            let end = Math.min(totalPages, start + windowSize - 1);
+            start = Math.max(1, Math.min(start, Math.max(1, end - windowSize + 1)));
+            pages.push(`<li class="page-item ${page <= 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${page - 1}">Prev</a></li>`);
+            for (let p = start; p <= end; p++) {
+                pages.push(`<li class="page-item ${p === page ? 'active' : ''}"><a class="page-link" href="#" data-page="${p}">${p}</a></li>`);
+            }
+            pages.push(`<li class="page-item ${page >= totalPages ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${page + 1}">Next</a></li>`);
+            reportPager.innerHTML = pages.join('');
+            reportPager.querySelectorAll('a[data-page]').forEach(a => {
+                a.addEventListener('click', async (ev) => {
+                    ev.preventDefault();
+                    const p = parseInt(a.getAttribute('data-page') || '1', 10);
+                    if (!isNaN(p)) {
+                        reportPage = p;
+                        await loadReport();
+                    }
+                });
+            });
+            updateSortIndicators();
+        }
+
+        function initReportRefs() {
+            reportSearchInput = document.getElementById('report-search');
+            reportSearchBtn = document.getElementById('report-search-btn');
+            reportTbody = document.getElementById('report-tbody');
+            reportPager = document.getElementById('report-pager');
+            reportCount = document.getElementById('report-count');
+            reportPageSizeSel = document.getElementById('report-page-size');
+            reportSortableHeaders = Array.from(document.querySelectorAll('th[data-sort]'));
+
+            reportPageSizeSel.addEventListener('change', async () => {
+                const v = parseInt(reportPageSizeSel.value, 10);
+                reportPageSize = isNaN(v) ? 25 : v;
+                reportPage = 1;
+                await loadReport();
+            });
+            reportSearchBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                reportSearch = reportSearchInput.value.trim();
+                reportPage = 1;
+                await loadReport();
+            });
+            reportSearchInput.addEventListener('keyup', async (e) => {
+                if (e.key === 'Enter') {
+                    reportSearch = reportSearchInput.value.trim();
+                    reportPage = 1;
+                    await loadReport();
+                }
+            });
+            reportSortableHeaders.forEach(th => {
+                // Preserve original label
+                if (!th.getAttribute('data-title')) th.setAttribute('data-title', th.textContent.trim());
+                th.addEventListener('click', async () => {
+                    const col = th.getAttribute('data-sort');
+                    if (col === reportSortColumn) {
+                        reportSortDesc = !reportSortDesc;
+                    } else {
+                        reportSortColumn = col;
+                        reportSortDesc = false;
+                    }
+                    reportPage = 1;
+                    await loadReport();
+                });
+            });
+        }
+
+        // Initialize report after DOM is ready
+        window.addEventListener('DOMContentLoaded', async () => {
+            initReportRefs();
+            await loadReport();
+        });
+    })();
+</script>
+
+

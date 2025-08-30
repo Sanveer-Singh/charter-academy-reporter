@@ -1,0 +1,32 @@
+---
+name: Feature Cleanup Phase
+appliesTo:
+  - "**/*.cs"
+  - "**/*.cshtml"
+  - "**/*.json"
+triggers:
+  keywords: ["cleanup phase", "refactor", "remove unused", "deprecate"]
+order: 15
+---
+# FEATURE CLEANUP PHASE
+
+Purpose: Remove or deprecate redundant code and assets introduced or superseded by the feature; align docs and patterns.
+
+## Actions
+- Identify unused/dead/duplicate code via focused search on modified areas (controllers, services, repositories, views, wwwroot assets).
+- Consolidate duplicate helpers/components; prefer reuse in `Shared` and `Templates`.
+- Mark API elements as `[Obsolete("Use <replacement>")]` where removal is risky; create backlog item to remove later.
+- Remove unreachable view paths/partials and orphaned static assets under `wwwroot`.
+- Update documentation (README snippets, relevant docs) only if behavior changed; avoid drift.
+- Ensure naming, namespaces, and folder placement match existing conventions.
+ - Verify security headers/CSP remain intact after asset/layout changes.
+ - Re-run linters/formatters and ensure no warnings are introduced.
+
+## Safety Checks
+- No changes that alter public behavior beyond the approved feature scope.
+- Run build after each significant removal.
+ - Apply conflict hierarchy: do not remove code that weakens security or data integrity safeguards.
+
+## State Update
+- Update workflow state: phase=Cleanup, status=completed, next=Verification, feature=<name>.
+

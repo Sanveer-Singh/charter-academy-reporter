@@ -8,21 +8,34 @@ triggers:
   keywords: ["feature", "implement", "add report", "new endpoint", "scaffold"]
 order: 11
 ---
-# FEATURE DEVELOPMENT WORKFLOW (Compact)
+# FEATURE DEVELOPMENT WORKFLOW (Upgraded Orchestrator)
 
-Compact activation to prevent bloat. For full workflow, see @Rules/Workflows/feature-development-workflow.md.
+Compact activation with phase orchestration. Pulls requirements from @README.md and invokes dedicated phase rules.
 
-## ORDER
+## PHASES
+1) Analysis → @Rules/Workflows/feature-analysis-phase.mdc
+2) Planning → @Rules/Workflows/feature-planning-phase.mdc
+3) Implementation → @Rules/Workflows/feature-implementation-phase.mdc
+4) Cleanup → @Rules/Workflows/feature-cleanup-phase.mdc
+5) Verification → @Rules/Workflows/feature-verification-phase.mdc
+
+## ORDER (during Implementation)
 Database → Entities → Repository → Service → ViewModels → Controller → Views → Tests
+
+## REQUIREMENTS SOURCE
+- Primary: @README.md (Success Criteria, RBAC, CPD Logic, Exports, Accessibility, Reliability, Validation, Testing Strategy, Roadmap)
 
 ## CHECK FIRST
 - Reuse patterns: @Services/Interfaces/*, @Views/Shared/Components/*, @Constants/*
 - Load only files for the current layer + immediate neighbors
 
 ## TEMPLATES
-- Use @Rules/Templates/*.md for concrete code patterns
+- Use @Rules/Templates/*.mdc for deterministic patterns across layers and tests
 
-## TESTS
+## TESTS FOCUS
 - Unit: service logic and validation
-- Integration: controller RBAC, query happy-path
+- Integration: controller RBAC, happy-path queries, export safety
+
+## STATE
+- Update @State/workflow-state.mdc markers at the end of each phase: phase, status, next, feature name
 
