@@ -39,12 +39,7 @@
 }
 
 
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-	:root {
-		--charter-primary: #ff8a3d;
-		/* Brighter text in dark mode for contrast */
-		--charter-text: var(--brand-text-strong-dark);
-	}
-}
+/* Dark mode adjustments
+   Temporarily disabled: caused low contrast when light surfaces are used.
+   We keep text dark globally to ensure readability across all pages. */
 
