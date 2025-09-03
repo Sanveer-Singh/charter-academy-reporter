@@ -16,6 +16,7 @@ using Charter.Reporter.Application.Services.Dashboard;
 using Charter.Reporter.Infrastructure.Services.Dashboard;
 using Charter.Reporter.Shared.Export;
 using Charter.Reporter.Infrastructure.Data.MariaDb;
+using Charter.Reporter.Infrastructure.Services.Export;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Data.Sqlite;
 using MySqlConnector;
@@ -97,6 +98,7 @@ builder.Services.AddScoped<IExportSafetyService>(sp =>
     var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ExportOptions>>().Value;
     return new ExportSafetyService(options);
 });
+builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
 builder.Services.Configure<AutoApproveOptions>(builder.Configuration.GetSection("AutoApprove"));
 // MariaDB connection factory with named options
 builder.Services.Configure<MariaDbSettings>("Moodle", builder.Configuration.GetSection("MariaDb:Moodle"));

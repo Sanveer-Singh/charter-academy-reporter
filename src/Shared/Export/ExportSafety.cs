@@ -12,7 +12,8 @@ public class ExportSafetyService : IExportSafetyService
     private readonly ExportOptions _options;
     private static readonly Dictionary<string, string[]> AllowLists = new(StringComparer.OrdinalIgnoreCase)
     {
-        { "baseline", new [] { "column1", "column2" } }
+        { "baseline", new [] { "column1", "column2" } },
+        { "moodle-report", new [] { "LastName", "FirstName", "Email", "PpraNo", "IdNo", "Province", "Agency", "CourseName", "Category", "EnrolmentDate", "CompletionDate", "FourthCompletionDate" } }
     };
 
     public ExportSafetyService(ExportOptions options)

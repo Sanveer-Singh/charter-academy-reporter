@@ -38,7 +38,7 @@ public class DashboardController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Summary([FromQuery] string? preset, [FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] int? categoryId, CancellationToken cancellationToken)
+    public async Task<IActionResult> Summary([FromQuery] string? preset, [FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] long? categoryId, CancellationToken cancellationToken)
     {
         ComputeDateRange(preset, ref from, ref to);
         var summary = await _dashboardService.GetSummaryAsync(from, to, categoryId, cancellationToken);
@@ -55,7 +55,7 @@ public class DashboardController : Controller
         [FromQuery] string? preset,
         [FromQuery] DateTime? from,
         [FromQuery] DateTime? to,
-        [FromQuery] int? categoryId,
+        [FromQuery] long? categoryId,
         [FromQuery] string? search,
         [FromQuery] string? sortColumn,
         [FromQuery] bool sortDesc,
@@ -83,6 +83,28 @@ public class DashboardController : Controller
         }
         var cats = await _dashboardService.GetCourseCategoriesAsync(cancellationToken);
         return Json(cats);
+    }
+
+    [HttpGet]
+    public IActionResult GetAvailableColumns()
+    {
+        var columns = new[]
+        {
+            new { value = "LastName", label = "Last Name" },
+            new { value = "FirstName", label = "First Name" },
+            new { value = "Email", label = "Email" },
+            new { value = "PpraNo", label = "PPRA No" },
+            new { value = "IdNo", label = "ID No" },
+            new { value = "Province", label = "Province" },
+            new { value = "Agency", label = "Agency" },
+            new { value = "CourseName", label = "Course Name" },
+            new { value = "Category", label = "Category" },
+            new { value = "EnrolmentDate", label = "Enrolment Date" },
+            new { value = "CompletionDate", label = "Completion Date" },
+            new { value = "FourthCompletionDate", label = "4th Completion Date" }
+        };
+        
+        return Json(columns);
     }
 
     private static void ComputeDateRange(string? preset, ref DateTime? from, ref DateTime? to)

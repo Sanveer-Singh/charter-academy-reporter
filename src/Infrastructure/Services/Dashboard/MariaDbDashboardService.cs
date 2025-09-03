@@ -31,7 +31,7 @@ public class MariaDbDashboardService : IDashboardService
         return new DashboardSummary(salesTask.Result, enrollTask.Result, completeTask.Result);
     }
 
-    public async Task<DashboardSummary> GetSummaryAsync(DateTime? fromUtc, DateTime? toUtc, int? courseCategoryId, CancellationToken cancellationToken)
+    public async Task<DashboardSummary> GetSummaryAsync(DateTime? fromUtc, DateTime? toUtc, long? courseCategoryId, CancellationToken cancellationToken)
     {
         var salesTask = GetSalesTotalOptionalAsync(fromUtc, toUtc, cancellationToken);
         var enrollTask = GetEnrollmentCountOptionalAsync(fromUtc, toUtc, courseCategoryId, cancellationToken);
@@ -68,7 +68,7 @@ ORDER BY c.name";
     public async Task<PagedResult<MoodleReportRow>> GetMoodleReportAsync(
         DateTime? fromUtc,
         DateTime? toUtc,
-        int? courseCategoryId,
+        long? courseCategoryId,
         string? search,
         string? sortColumn,
         bool sortDesc,
@@ -85,13 +85,15 @@ ORDER BY c.name";
             var prefix = NormalizePrefix(_moodleOptions.Get(MoodleNamedOptions).TablePrefix, string.Empty);
 
             // Map allowed sort columns to SQL expressions to prevent injection
-            string SortExpr(string? col)
+            static string SortExpr(string? col)
             {
                 return (col?.ToLowerInvariant()) switch
                 {
                     "firstname" => "FirstName",
                     "lastname" => "LastName",
                     "email" => "Email",
+                    "province" => "Province",
+                    "agency" => "Agency",
                     "coursename" => "CourseName",
                     "category" => "Category",
                     // Use epoch columns for deterministic ordering
@@ -140,10 +142,12 @@ CustomFields AS (
     SELECT 
         uid.userid,
         MAX(CASE WHEN uif.shortname = 'ppranumber' THEN uid.data END) as ppra_no,
-        MAX(CASE WHEN uif.shortname = 'said' THEN uid.data END) as id_no
+        MAX(CASE WHEN uif.shortname = 'said' THEN uid.data END) as id_no,
+        MAX(CASE WHEN uif.shortname IN ('region_province', 'province', 'user_province', 'employerprovince', 'workprovince') THEN uid.data END) as province,
+        MAX(CASE WHEN uif.shortname IN ('region_agency', 'agency_name', 'agency', 'agencyname', 'employeragency', 'workagency', 'agencycompany') THEN uid.data END) as agency
     FROM {prefix}user_info_data uid
     JOIN {prefix}user_info_field uif ON uid.fieldid = uif.id
-    WHERE uif.shortname IN ('ppranumber', 'said')
+    WHERE uif.shortname IN ('ppranumber', 'said', 'region_province', 'province', 'user_province', 'employerprovince', 'workprovince', 'region_agency', 'agency_name', 'agency', 'agencyname', 'employeragency', 'workagency', 'agencycompany')
     GROUP BY uid.userid
 ),
 Base AS (
@@ -153,6 +157,8 @@ Base AS (
         u.lastname AS LastName, 
         COALESCE(cf.ppra_no, '') AS PpraNo,
         COALESCE(cf.id_no, '') AS IdNo,
+        COALESCE(NULLIF(cf.province, ''), '-') AS Province,
+        COALESCE(NULLIF(cf.agency, ''), '-') AS Agency,
         u.email AS Email,
         c.fullname AS CourseName, 
         cat.name AS Category,
@@ -171,7 +177,7 @@ Base AS (
       AND (@categoryId IS NULL OR c.category = @categoryId)
       AND (
             @search IS NULL OR @search = '' OR (
-                u.firstname LIKE @like OR u.lastname LIKE @like OR u.email LIKE @like OR c.fullname LIKE @like OR cat.name LIKE @like OR cf.ppra_no LIKE @like OR cf.id_no LIKE @like
+                u.firstname LIKE @like OR u.lastname LIKE @like OR u.email LIKE @like OR c.fullname LIKE @like OR cat.name LIKE @like OR cf.ppra_no LIKE @like OR cf.id_no LIKE @like OR cf.province LIKE @like OR cf.agency LIKE @like
             )
       )
 )
@@ -181,6 +187,8 @@ SELECT SQL_CALC_FOUND_ROWS
     LastName,
     PpraNo,
     IdNo,
+    Province,
+    Agency,
     Email,
     CourseName,
     Category,
@@ -194,7 +202,9 @@ SELECT FOUND_ROWS();";
 
             var like = string.IsNullOrWhiteSpace(search) ? null : $"%{search!.Trim()}%";
             var offset = Math.Max(page - 1, 0) * Math.Max(pageSize, 1);
-            var limit = Math.Clamp(pageSize, 1, 200);
+            // Allow larger page sizes for export scenarios (up to 100K), but limit regular queries to 200 for performance
+            var maxLimit = pageSize > 200 ? 100000 : 200;
+            var limit = Math.Clamp(pageSize, 1, maxLimit);
 
             using var multi = await conn.QueryMultipleAsync(new CommandDefinition(sql, new
             {
@@ -318,7 +328,7 @@ WHERE ue.timecreated BETWEEN @fromEpoch AND @toEpoch";
         }
     }
 
-    private async Task<int> GetEnrollmentCountOptionalAsync(DateTime? fromUtc, DateTime? toUtc, int? categoryId, CancellationToken ct)
+    private async Task<int> GetEnrollmentCountOptionalAsync(DateTime? fromUtc, DateTime? toUtc, long? categoryId, CancellationToken ct)
     {
         using var conn = _factory.CreateMoodleConnection();
         await conn.OpenAsync(ct);
@@ -375,7 +385,7 @@ WHERE cc.timecompleted IS NOT NULL
         }
     }
 
-    private async Task<int> GetCompletionCountOptionalAsync(DateTime? fromUtc, DateTime? toUtc, int? categoryId, CancellationToken ct)
+    private async Task<int> GetCompletionCountOptionalAsync(DateTime? fromUtc, DateTime? toUtc, long? categoryId, CancellationToken ct)
     {
         using var conn = _factory.CreateMoodleConnection();
         await conn.OpenAsync(ct);

@@ -1,0 +1,75 @@
+/* Notification System Styles */
+.notification-alert {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border-left: 4px solid;
+    animation: slideInDown 0.3s ease-out;
+}
+
+.alert-success {
+    border-left-color: #28a745;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-info {
+    border-left-color: #17a2b8;
+}
+
+.notification-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    margin-top: 0.125rem;
+}
+
+.alert-success .notification-icon {
+    color: #155724;
+}
+
+.alert-danger .notification-icon {
+    color: #721c24;
+}
+
+.alert-warning .notification-icon {
+    color: #856404;
+}
+
+.alert-info .notification-icon {
+    color: #0c5460;
+}
+
+.notification-content .alert-heading {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translate3d(0, -100%, 0);
+        opacity: 0;
+    }
+    to {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .notification-alert {
+        border-width: 2px;
+        border-left-width: 6px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .notification-alert {
+        animation: none;
+    }
+}

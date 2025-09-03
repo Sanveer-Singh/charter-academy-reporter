@@ -6,7 +6,7 @@
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-    <a asp-controller="Export" asp-action="CsvSample" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-download fa-sm text-white-50"></i> Export CSV</a>
+    <button id="export-excel-btn" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm"><i class="fas fa-file-excel fa-sm text-white-50"></i> Export to Excel</button>
  </div>
 
 <div class="card mb-4">
@@ -126,6 +126,8 @@
                         <th scope="col" data-sort="email">Email</th>
                         <th scope="col" data-sort="ppraNo">PPRA no</th>
                         <th scope="col" data-sort="idNo">ID no</th>
+                        <th scope="col" data-sort="province">Province</th>
+                        <th scope="col" data-sort="agency">Agency</th>
                         <th scope="col" data-sort="courseName">Course Name</th>
                         <th scope="col" data-sort="category">Category</th>
                         <th scope="col" data-sort="enrolmentDate">Enrolment Date</th>
@@ -134,7 +136,7 @@
                     </tr>
                 </thead>
                 <tbody id="report-tbody">
-                    <tr><td colspan="10" class="text-center p-4 text-muted">Loading…</td></tr>
+                    <tr><td colspan="12" class="text-center p-4 text-muted">Loading…</td></tr>
                 </tbody>
             </table>
         </div>
@@ -144,6 +146,37 @@
         <nav>
             <ul id="report-pager" class="pagination mb-0"></ul>
         </nav>
+    </div>
+</div>
+
+<!-- Export to Excel Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalLabel">
+                    <i class="fas fa-file-excel text-success me-2"></i>Export to Excel
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">Select the columns you want to include in your Excel export:</p>
+                <div id="column-selection" class="row">
+                    <!-- Column checkboxes will be populated here -->
+                </div>
+                <hr>
+                <div class="d-flex align-items-center">
+                    <button id="select-all-columns" class="btn btn-outline-primary btn-sm me-2">Select All</button>
+                    <button id="deselect-all-columns" class="btn btn-outline-secondary btn-sm">Deselect All</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button id="confirm-export" type="button" class="btn btn-success">
+                    <i class="fas fa-download me-1"></i>Export Excel
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -296,6 +329,8 @@
                     <td class="text-nowrap">${r.email ?? ''}</td>
                     <td>${r.ppraNo ?? ''}</td>
                     <td>${r.idNo ?? ''}</td>
+                    <td>${r.province ?? ''}</td>
+                    <td>${r.agency ?? ''}</td>
                     <td>${r.courseName ?? ''}</td>
                     <td>${r.category ?? ''}</td>
                     <td class="text-nowrap">${fmtDate(r.enrolmentDate)}</td>
@@ -385,8 +420,236 @@
         window.addEventListener('DOMContentLoaded', async () => {
             initReportRefs();
             await loadReport();
+            initExportModal();
         });
+
+        // Export Modal Functionality
+        function initExportModal() {
+            console.log('Initializing export modal...');
+            const exportBtn = document.getElementById('export-excel-btn');
+            const modal = new bootstrap.Modal(document.getElementById('exportModal'));
+            const columnSelection = document.getElementById('column-selection');
+            const selectAllBtn = document.getElementById('select-all-columns');
+            const deselectAllBtn = document.getElementById('deselect-all-columns');
+            const confirmExportBtn = document.getElementById('confirm-export');
+
+            console.log('Export button:', exportBtn);
+            console.log('Column selection div:', columnSelection);
+
+            let availableColumns = [];
+
+            // Load available columns
+            fetch('/Dashboard/GetAvailableColumns')
+                .then(res => {
+                    console.log('Response status:', res.status);
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    return res.json();
+                })
+                .then(columns => {
+                    console.log('Received columns:', columns);
+                    availableColumns = columns;
+                    renderColumnCheckboxes();
+                })
+                .catch(err => {
+                    console.error('Failed to load columns:', err);
+                    // Fallback: render default columns if API fails
+                    availableColumns = [
+                        { value: "LastName", label: "Last Name" },
+                        { value: "FirstName", label: "First Name" },
+                        { value: "Email", label: "Email" },
+                        { value: "PpraNo", label: "PPRA No" },
+                        { value: "IdNo", label: "ID No" },
+                        { value: "Province", label: "Province" },
+                        { value: "Agency", label: "Agency" },
+                        { value: "CourseName", label: "Course Name" },
+                        { value: "Category", label: "Category" },
+                        { value: "EnrolmentDate", label: "Enrolment Date" },
+                        { value: "CompletionDate", label: "Completion Date" },
+                        { value: "FourthCompletionDate", label: "4th Completion Date" }
+                    ];
+                    renderColumnCheckboxes();
+                });
+
+            function renderColumnCheckboxes() {
+                console.log('Rendering checkboxes for columns:', availableColumns);
+                console.log('Column selection element:', columnSelection);
+                
+                if (!availableColumns || availableColumns.length === 0) {
+                    console.error('No columns available to render');
+                    columnSelection.innerHTML = '<p class="text-danger">No columns available</p>';
+                    return;
+                }
+                
+                const checkboxHtml = availableColumns.map(col => `
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input column-checkbox" type="checkbox" 
+                                   value="${col.value}" id="col-${col.value}" checked>
+                            <label class="form-check-label" for="col-${col.value}">
+                                ${col.label}
+                            </label>
+                        </div>
+                    </div>
+                `).join('');
+                
+                console.log('Generated HTML:', checkboxHtml);
+                columnSelection.innerHTML = checkboxHtml;
+                console.log('Updated columnSelection innerHTML');
+            }
+
+            function getSelectedColumns() {
+                return Array.from(document.querySelectorAll('.column-checkbox:checked'))
+                    .map(cb => cb.value);
+            }
+
+            function setAllColumns(checked) {
+                document.querySelectorAll('.column-checkbox').forEach(cb => {
+                    cb.checked = checked;
+                });
+            }
+
+            // Initialize columns immediately with fallback
+            if (availableColumns.length === 0) {
+                availableColumns = [
+                    { value: "LastName", label: "Last Name" },
+                    { value: "FirstName", label: "First Name" },
+                    { value: "Email", label: "Email" },
+                    { value: "PpraNo", label: "PPRA No" },
+                    { value: "IdNo", label: "ID No" },
+                    { value: "Province", label: "Province" },
+                    { value: "Agency", label: "Agency" },
+                    { value: "CourseName", label: "Course Name" },
+                    { value: "Category", label: "Category" },
+                    { value: "EnrolmentDate", label: "Enrolment Date" },
+                    { value: "CompletionDate", label: "Completion Date" },
+                    { value: "FourthCompletionDate", label: "4th Completion Date" }
+                ];
+                console.log('Using fallback columns');
+                renderColumnCheckboxes();
+            }
+
+            // Event listeners
+            exportBtn.addEventListener('click', () => {
+                console.log('Export button clicked');
+                // Ensure columns are rendered when modal opens
+                if (columnSelection.innerHTML.trim() === '' || columnSelection.innerHTML.includes('No columns available')) {
+                    console.log('Column selection is empty, re-rendering...');
+                    renderColumnCheckboxes();
+                }
+                modal.show();
+            });
+
+            // Also render columns when modal is shown (Bootstrap event)
+            document.getElementById('exportModal').addEventListener('shown.bs.modal', function () {
+                console.log('Modal shown, checking column rendering...');
+                if (columnSelection.innerHTML.trim() === '' || !columnSelection.querySelector('.column-checkbox')) {
+                    console.log('Re-rendering columns on modal show...');
+                    renderColumnCheckboxes();
+                }
+            });
+
+            selectAllBtn.addEventListener('click', () => setAllColumns(true));
+            deselectAllBtn.addEventListener('click', () => setAllColumns(false));
+
+            confirmExportBtn.addEventListener('click', async () => {
+                const selectedColumns = getSelectedColumns();
+                if (selectedColumns.length === 0) {
+                    alert('Please select at least one column to export.');
+                    return;
+                }
+
+                // Show loading state
+                confirmExportBtn.disabled = true;
+                confirmExportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
+
+                try {
+                    // Build form data with current filters
+                    const formData = new FormData();
+                    
+                    // Add selected columns
+                    selectedColumns.forEach(col => formData.append('selectedColumns', col));
+                    
+                    // Add current filter values
+                    const filterParams = buildFilterParams();
+                    if (preset.value === 'custom') {
+                        if (from.value) {
+                            const fromDate = new Date(from.value + 'T00:00:00Z');
+                            formData.append('fromUtc', fromDate.toISOString());
+                        }
+                        if (to.value) {
+                            const toDate = new Date(to.value + 'T23:59:59Z');
+                            formData.append('toUtc', toDate.toISOString());
+                        }
+                    } else if (preset.value !== 'all-time') {
+                        const range = computePresetRange(preset.value);
+                        if (range && range.from) {
+                            const fromDate = new Date(range.from + 'T00:00:00Z');
+                            formData.append('fromUtc', fromDate.toISOString());
+                        }
+                        if (range && range.to) {
+                            const toDate = new Date(range.to + 'T23:59:59Z');
+                            formData.append('toUtc', toDate.toISOString());
+                        }
+                    }
+                    
+                    // Add category filter if applicable
+                    const categoryEl = document.getElementById('categoryId');
+                    if (categoryEl && categoryEl.value) {
+                        formData.append('courseCategoryId', categoryEl.value);
+                    }
+                    
+                    // Add search term
+                    if (reportSearch) {
+                        formData.append('search', reportSearch);
+                    }
+
+                    // Make the export request
+                    const response = await fetch('/Export/ExcelMoodleReport', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Export failed');
+                    }
+
+                    // Download the file
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    
+                    // Extract filename from response headers if available
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let fileName = 'Moodle_Report.xlsx';
+                    if (contentDisposition) {
+                        const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (fileNameMatch && fileNameMatch[1]) {
+                            fileName = fileNameMatch[1].replace(/['"]/g, '');
+                        }
+                    }
+                    
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    // Close modal
+                    modal.hide();
+                } catch (error) {
+                    alert('Export failed: ' + error.message);
+                } finally {
+                    // Reset button state
+                    confirmExportBtn.disabled = false;
+                    confirmExportBtn.innerHTML = '<i class="fas fa-download me-1"></i>Export Excel';
+                }
+            });
+        }
     })();
 </script>
-
 

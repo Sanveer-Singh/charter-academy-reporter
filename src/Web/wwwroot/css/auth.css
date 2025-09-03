@@ -1,0 +1,139 @@
+/* Authentication Forms Styling */
+
+/* Login Form Styles */
+.login-card {
+    border: none;
+    border-radius: 1rem;
+}
+
+.login-card .card-header {
+    background: linear-gradient(135deg, var(--charter-primary) 0%, var(--charter-secondary) 100%);
+    color: white;
+    border-radius: 1rem 1rem 0 0 !important;
+}
+
+.login-form .form-control:focus {
+    border-color: var(--charter-primary);
+    box-shadow: 0 0 0 0.2rem rgba(243, 112, 33, 0.25);
+}
+
+.login-form .btn-primary {
+    background: linear-gradient(135deg, var(--charter-primary) 0%, var(--charter-secondary) 100%);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    transition: all 0.3s ease;
+}
+
+.login-form .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 112, 33, 0.4);
+}
+
+.login-form .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.login-form .form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.login-form .invalid-feedback {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.login-form .form-check-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Register Form Styles */
+.register-card {
+    border: none;
+    border-radius: 1rem;
+}
+
+.register-card .card-header {
+    background: linear-gradient(135deg, var(--charter-primary) 0%, var(--charter-secondary) 100%);
+    color: white;
+    border-radius: 1rem 1rem 0 0 !important;
+}
+
+.register-form .form-section {
+    background: #f8f9fc;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--charter-primary);
+}
+
+.register-form .form-control:focus {
+    border-color: var(--charter-primary);
+    box-shadow: 0 0 0 0.2rem rgba(243, 112, 33, 0.25);
+}
+
+.register-form .btn-primary {
+    background: linear-gradient(135deg, var(--charter-primary) 0%, var(--charter-secondary) 100%);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    transition: all 0.3s ease;
+}
+
+.register-form .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 112, 33, 0.4);
+}
+
+.register-form .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.register-form .form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.register-form .invalid-feedback {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.register-form .text-primary {
+    color: var(--charter-primary) !important;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 576px) {
+    .login-card {
+        margin: 1rem;
+    }
+    
+    .login-form .btn-primary {
+        padding: 0.875rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .register-form .form-section {
+        padding: 1rem;
+    }
+    
+    .register-card {
+        margin: 0.5rem;
+    }
+    
+    .register-form .btn-primary {
+        padding: 0.875rem;
+        font-size: 0.9rem;
+    }
+}

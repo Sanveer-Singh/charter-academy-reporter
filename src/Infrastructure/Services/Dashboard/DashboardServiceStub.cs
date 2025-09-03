@@ -11,7 +11,7 @@ public class DashboardServiceStub : IDashboardService
         return Task.FromResult(summary);
     }
 
-    public Task<DashboardSummary> GetSummaryAsync(DateTime? fromUtc, DateTime? toUtc, int? courseCategoryId, CancellationToken cancellationToken)
+    public Task<DashboardSummary> GetSummaryAsync(DateTime? fromUtc, DateTime? toUtc, long? courseCategoryId, CancellationToken cancellationToken)
     {
         var summary = new DashboardSummary(SalesTotal: 0m, EnrollmentCount: 0, CompletionCount: 0);
         return Task.FromResult(summary);
@@ -23,7 +23,7 @@ public class DashboardServiceStub : IDashboardService
         return Task.FromResult(empty);
     }
 
-    public Task<PagedResult<MoodleReportRow>> GetMoodleReportAsync(DateTime? fromUtc, DateTime? toUtc, int? courseCategoryId, string? search, string? sortColumn, bool sortDesc, int page, int pageSize, CancellationToken cancellationToken)
+    public Task<PagedResult<MoodleReportRow>> GetMoodleReportAsync(DateTime? fromUtc, DateTime? toUtc, long? courseCategoryId, string? search, string? sortColumn, bool sortDesc, int page, int pageSize, CancellationToken cancellationToken)
     {
         return Task.FromResult(new PagedResult<MoodleReportRow>(Array.Empty<MoodleReportRow>(), 0, page, pageSize));
     }

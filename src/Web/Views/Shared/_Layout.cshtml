@@ -15,6 +15,8 @@
 	<link rel="stylesheet" href="~/css/sb-admin-2.min.css" />
 	<link rel="stylesheet" href="~/css/variables.css" />
 	<link rel="stylesheet" href="~/css/site.css" />
+	<link rel="stylesheet" href="~/css/notifications.css" />
+	<link rel="stylesheet" href="~/css/auth.css" />
 
 	@RenderSection("Styles", required: false)
 </head>
@@ -76,6 +78,7 @@
 				</nav>
 
 				<main id="main-content" class="container-fluid">
+					<partial name="_Notifications" />
 					@RenderBody()
 				</main>
 			</div>
