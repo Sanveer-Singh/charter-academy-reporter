@@ -213,3 +213,5 @@ resource "aws_ssm_parameter" "artifacts_bucket" {
 
 
 
+
+
