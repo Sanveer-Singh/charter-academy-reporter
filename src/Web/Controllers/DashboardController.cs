@@ -22,6 +22,8 @@ public class DashboardController : Controller
         var from = to.AddDays(-90);
         var summary = await _dashboardService.GetBaselineSummaryAsync(from, to, cancellationToken);
         var isCharterAdmin = User.IsInRole(AppRoles.CharterAdmin);
+        var isRebosaAdmin = User.IsInRole(AppRoles.RebosaAdmin);
+        var canExport = isCharterAdmin || isRebosaAdmin;
         var categories = isCharterAdmin ? await _dashboardService.GetCourseCategoriesAsync(cancellationToken) : Array.Empty<CourseCategory>();
         var vm = new DashboardVm
         {
@@ -32,7 +34,8 @@ public class DashboardController : Controller
             ToUtc = to,
             SelectedPreset = "last-3-months",
             Categories = categories,
-            IsCharterAdmin = isCharterAdmin
+            IsCharterAdmin = isCharterAdmin,
+            CanExport = canExport
         };
         return View(vm);
     }
@@ -88,11 +91,18 @@ public class DashboardController : Controller
     [HttpGet]
     public IActionResult GetAvailableColumns()
     {
+        // Only Charter or Rebosa Admins can access column information for export
+        if (!(User.IsInRole(AppRoles.CharterAdmin) || User.IsInRole(AppRoles.RebosaAdmin)))
+        {
+            return Forbid("Only Charter or Rebosa Admins are authorized to access export column information.");
+        }
+        
         var columns = new[]
         {
             new { value = "LastName", label = "Last Name" },
             new { value = "FirstName", label = "First Name" },
             new { value = "Email", label = "Email" },
+            new { value = "PhoneNumber", label = "Phone Number" },
             new { value = "PpraNo", label = "PPRA No" },
             new { value = "IdNo", label = "ID No" },
             new { value = "Province", label = "Province" },

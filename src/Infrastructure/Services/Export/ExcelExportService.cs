@@ -32,6 +32,7 @@ public class ExcelExportService : IExcelExportService
                 ["LastName"] = ("Last Name", r => r.LastName),
                 ["FirstName"] = ("First Name", r => r.FirstName),
                 ["Email"] = ("Email", r => r.Email),
+                ["PhoneNumber"] = ("Phone Number", r => r.PhoneNumber),
                 ["PpraNo"] = ("PPRA No", r => r.PpraNo),
                 ["IdNo"] = ("ID No", r => r.IdNo),
                 ["Province"] = ("Province", r => r.Province),

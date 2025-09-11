@@ -4,9 +4,82 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<style>
+    /* Export Modal UX Improvements */
+    #exportModal .modal-dialog {
+        max-width: 90vw;
+    }
+    
+    @@media (max-width: 768px) {
+        #exportModal .modal-dialog {
+            margin: 0.5rem;
+            max-width: calc(100vw - 1rem);
+        }
+        
+        #exportModal .modal-body {
+            padding: 1rem;
+        }
+        
+        #exportModal .col-md-6 {
+            margin-bottom: 0.5rem;
+        }
+        
+        #column-selection {
+            max-height: 300px !important;
+        }
+    }
+    
+    /* Improve checkbox visibility */
+    .form-check-input {
+        width: 1.25em;
+        height: 1.25em;
+        margin-top: 0.125em;
+        cursor: pointer;
+    }
+    
+    .form-check-label {
+        margin-left: 0.25rem;
+        user-select: none;
+    }
+    
+    /* Focus states for accessibility */
+    .btn:focus,
+    .btn-close:focus,
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    /* Smooth transitions */
+    .modal.fade .modal-dialog {
+        transition: transform 0.3s ease-out;
+    }
+    
+    /* Better scrollbar for column selection */
+    #column-selection::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #column-selection::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    #column-selection::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    #column-selection::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
+
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-    <button id="export-excel-btn" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm"><i class="fas fa-file-excel fa-sm text-white-50"></i> Export to Excel</button>
+    @if (Model.CanExport)
+    {
+        <button id="export-excel-btn" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm"><i class="fas fa-file-excel fa-sm text-white-50"></i> Export to Excel</button>
+    }
  </div>
 
 <div class="card mb-4">
@@ -124,6 +197,7 @@
                         <th scope="col" data-sort="lastname">Last Name</th>
                         <th scope="col" data-sort="firstname">First Name</th>
                         <th scope="col" data-sort="email">Email</th>
+                        <th scope="col" data-sort="phonenumber">Phone Number</th>
                         <th scope="col" data-sort="ppraNo">PPRA no</th>
                         <th scope="col" data-sort="idNo">ID no</th>
                         <th scope="col" data-sort="province">Province</th>
@@ -136,7 +210,7 @@
                     </tr>
                 </thead>
                 <tbody id="report-tbody">
-                    <tr><td colspan="12" class="text-center p-4 text-muted">Loading…</td></tr>
+                    <tr><td colspan="13" class="text-center p-4 text-muted">Loading…</td></tr>
                 </tbody>
             </table>
         </div>
@@ -149,36 +223,61 @@
     </div>
 </div>
 
-<!-- Export to Excel Modal -->
-<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exportModalLabel">
-                    <i class="fas fa-file-excel text-success me-2"></i>Export to Excel
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted mb-3">Select the columns you want to include in your Excel export:</p>
-                <div id="column-selection" class="row">
-                    <!-- Column checkboxes will be populated here -->
+@if (Model.CanExport)
+{
+    <!-- Export to Excel Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-light border-bottom">
+                    <h5 class="modal-title d-flex align-items-center" id="exportModalLabel">
+                        <i class="fas fa-file-excel text-success me-2"></i>
+                        <span>Export to Excel</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" title="Close (ESC)"></button>
                 </div>
-                <hr>
-                <div class="d-flex align-items-center">
-                    <button id="select-all-columns" class="btn btn-outline-primary btn-sm me-2">Select All</button>
-                    <button id="deselect-all-columns" class="btn btn-outline-secondary btn-sm">Deselect All</button>
+                <div class="modal-body">
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span>Select the columns you want to include in your Excel export. All columns are selected by default.</span>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Available Columns</h6>
+                        <span id="selection-count" class="badge bg-primary">0 selected</span>
+                    </div>
+                    
+                    <div id="column-selection" class="row g-2" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Column checkboxes will be populated here -->
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="btn-group" role="group" aria-label="Selection controls">
+                            <button id="select-all-columns" class="btn btn-outline-primary btn-sm" title="Select all columns">
+                                <i class="fas fa-check-square me-1"></i>Select All
+                            </button>
+                            <button id="deselect-all-columns" class="btn btn-outline-secondary btn-sm" title="Deselect all columns">
+                                <i class="far fa-square me-1"></i>Deselect All
+                            </button>
+                        </div>
+                        <small class="text-muted">Press ESC to cancel</small>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button id="confirm-export" type="button" class="btn btn-success">
-                    <i class="fas fa-download me-1"></i>Export Excel
-                </button>
+                <div class="modal-footer bg-light border-top">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button id="confirm-export" type="button" class="btn btn-success">
+                        <i class="fas fa-download me-1"></i>Export Excel
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+}
 
 <script>
     (function() {
@@ -327,6 +426,7 @@
                     <td>${r.lastName ?? ''}</td>
                     <td>${r.firstName ?? ''}</td>
                     <td class="text-nowrap">${r.email ?? ''}</td>
+                    <td>${r.phoneNumber ?? '-'}</td>
                     <td>${r.ppraNo ?? ''}</td>
                     <td>${r.idNo ?? ''}</td>
                     <td>${r.province ?? ''}</td>
@@ -427,6 +527,13 @@
         function initExportModal() {
             console.log('Initializing export modal...');
             const exportBtn = document.getElementById('export-excel-btn');
+            
+            // Exit early if export button doesn't exist (non-Charter admin users)
+            if (!exportBtn) {
+                console.log('Export button not found - user is not a Charter Admin');
+                return;
+            }
+            
             const modal = new bootstrap.Modal(document.getElementById('exportModal'));
             const columnSelection = document.getElementById('column-selection');
             const selectAllBtn = document.getElementById('select-all-columns');
@@ -459,6 +566,7 @@
                         { value: "LastName", label: "Last Name" },
                         { value: "FirstName", label: "First Name" },
                         { value: "Email", label: "Email" },
+                        { value: "PhoneNumber", label: "Phone Number" },
                         { value: "PpraNo", label: "PPRA No" },
                         { value: "IdNo", label: "ID No" },
                         { value: "Province", label: "Province" },
@@ -478,16 +586,16 @@
                 
                 if (!availableColumns || availableColumns.length === 0) {
                     console.error('No columns available to render');
-                    columnSelection.innerHTML = '<p class="text-danger">No columns available</p>';
+                    columnSelection.innerHTML = '<div class="col-12"><p class="text-danger text-center">No columns available</p></div>';
                     return;
                 }
                 
                 const checkboxHtml = availableColumns.map(col => `
-                    <div class="col-md-6 col-lg-4 mb-2">
-                        <div class="form-check">
+                    <div class="col-md-6 col-lg-4">
+                        <div class="form-check p-2 border rounded hover-highlight">
                             <input class="form-check-input column-checkbox" type="checkbox" 
                                    value="${col.value}" id="col-${col.value}" checked>
-                            <label class="form-check-label" for="col-${col.value}">
+                            <label class="form-check-label" for="col-${col.value}" style="cursor: pointer;">
                                 ${col.label}
                             </label>
                         </div>
@@ -497,6 +605,30 @@
                 console.log('Generated HTML:', checkboxHtml);
                 columnSelection.innerHTML = checkboxHtml;
                 console.log('Updated columnSelection innerHTML');
+                
+                // Add hover effect styling
+                const style = document.createElement('style');
+                style.textContent = `
+                    .hover-highlight:hover {
+                        background-color: #f8f9fa;
+                        transition: background-color 0.2s;
+                    }
+                    .form-check-input:checked + .form-check-label {
+                        font-weight: 500;
+                    }
+                `;
+                if (!document.querySelector('#column-hover-styles')) {
+                    style.id = 'column-hover-styles';
+                    document.head.appendChild(style);
+                }
+                
+                // Update selection count
+                updateSelectionCount();
+                
+                // Add change listeners to update count
+                document.querySelectorAll('.column-checkbox').forEach(cb => {
+                    cb.addEventListener('change', updateSelectionCount);
+                });
             }
 
             function getSelectedColumns() {
@@ -508,6 +640,39 @@
                 document.querySelectorAll('.column-checkbox').forEach(cb => {
                     cb.checked = checked;
                 });
+                updateSelectionCount();
+            }
+            
+            function updateSelectionCount() {
+                const selectedCount = document.querySelectorAll('.column-checkbox:checked').length;
+                const totalCount = document.querySelectorAll('.column-checkbox').length;
+                const countElement = document.getElementById('selection-count');
+                
+                if (countElement) {
+                    countElement.textContent = `${selectedCount} of ${totalCount} selected`;
+                    
+                    // Update badge color based on selection
+                    if (selectedCount === 0) {
+                        countElement.className = 'badge bg-danger';
+                    } else if (selectedCount === totalCount) {
+                        countElement.className = 'badge bg-success';
+                    } else {
+                        countElement.className = 'badge bg-primary';
+                    }
+                }
+                
+                // Enable/disable export button based on selection
+                const exportBtn = document.getElementById('confirm-export');
+                if (exportBtn) {
+                    exportBtn.disabled = selectedCount === 0;
+                    if (selectedCount === 0) {
+                        exportBtn.classList.remove('btn-success');
+                        exportBtn.classList.add('btn-secondary');
+                    } else {
+                        exportBtn.classList.remove('btn-secondary');
+                        exportBtn.classList.add('btn-success');
+                    }
+                }
             }
 
             // Initialize columns immediately with fallback
@@ -516,6 +681,7 @@
                     { value: "LastName", label: "Last Name" },
                     { value: "FirstName", label: "First Name" },
                     { value: "Email", label: "Email" },
+                    { value: "PhoneNumber", label: "Phone Number" },
                     { value: "PpraNo", label: "PPRA No" },
                     { value: "IdNo", label: "ID No" },
                     { value: "Province", label: "Province" },
@@ -556,11 +722,12 @@
             confirmExportBtn.addEventListener('click', async () => {
                 const selectedColumns = getSelectedColumns();
                 if (selectedColumns.length === 0) {
-                    alert('Please select at least one column to export.');
+                    // This shouldn't happen due to button disabling, but just in case
                     return;
                 }
 
                 // Show loading state
+                const originalBtnContent = confirmExportBtn.innerHTML;
                 confirmExportBtn.disabled = true;
                 confirmExportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
 
@@ -641,12 +808,40 @@
 
                     // Close modal
                     modal.hide();
+                    
+                    // Show success feedback
+                    const successToast = document.createElement('div');
+                    successToast.className = 'position-fixed bottom-0 end-0 p-3';
+                    successToast.style.zIndex = '9999';
+                    successToast.innerHTML = `
+                        <div class="toast show align-items-center text-white bg-success border-0" role="alert">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    <i class="fas fa-check-circle me-2"></i>Excel export started successfully!
+                                </div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(successToast);
+                    setTimeout(() => successToast.remove(), 3000);
+                    
                 } catch (error) {
-                    alert('Export failed: ' + error.message);
+                    // Show error in a more user-friendly way
+                    const errorAlert = document.createElement('div');
+                    errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                    errorAlert.innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Export failed:</strong> ${error.message || 'An unexpected error occurred'}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    const modalBody = document.querySelector('#exportModal .modal-body');
+                    modalBody.insertBefore(errorAlert, modalBody.firstChild);
                 } finally {
                     // Reset button state
                     confirmExportBtn.disabled = false;
-                    confirmExportBtn.innerHTML = '<i class="fas fa-download me-1"></i>Export Excel';
+                    confirmExportBtn.innerHTML = originalBtnContent;
+                    updateSelectionCount(); // Re-enable button if columns are selected
                 }
             });
         }

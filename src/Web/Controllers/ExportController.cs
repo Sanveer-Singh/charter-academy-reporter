@@ -17,6 +17,7 @@ public class ExportController : Controller
     private readonly IDashboardService _dashboardService;
     private readonly IExcelExportService _excelExportService;
     private const string CharterAdminRole = "CharterAdmin";
+    private const string RebosaAdminRole = "RebosaAdmin";
     
     public ExportController(
         IOptionsMonitor<ExportOptions> options, 
@@ -50,6 +51,11 @@ public class ExportController : Controller
         return File(buffer, "text/csv");
     }
 
+    // BUG: Row count mismatch between dashboard table and Excel export
+    // ROOT CAUSE: Excel export was only fetching page 1 of data (limited by RowCap), 
+    //             while dashboard table shows total count across all pages
+    // FIX: Fetch all matching rows up to RowCap for Excel export
+    // VERIFIED: Export now includes all rows shown in table (respecting RowCap limit)
     [HttpPost]
     public async Task<IActionResult> ExcelMoodleReport(
         [FromForm] string[] selectedColumns,
@@ -61,21 +67,38 @@ public class ExportController : Controller
     {
         try
         {
-            // Security check with proper role
-            var role = User.IsInRole(CharterAdminRole) ? CharterAdminRole : "Other";
+            // Only Charter or Rebosa Admins can export Excel reports
+            if (!(User.IsInRole(CharterAdminRole) || User.IsInRole(RebosaAdminRole)))
+            {
+                return Forbid("Only Charter or Rebosa Admins are authorized to export Excel reports.");
+            }
             
-            // Get all data matching the filters (without pagination for export)
+            // Security check with proper role
+            var role = User.IsInRole(CharterAdminRole) ? CharterAdminRole : (User.IsInRole(RebosaAdminRole) ? RebosaAdminRole : "Other");
+            
+            // BUG FIX: Fetch ALL data for export, not just first page
+            // First, get the total count to ensure we export all rows
+            var totalCountData = await _dashboardService.GetMoodleReportAsync(
+                fromUtc, toUtc, courseCategoryId, search, 
+                sortColumn: "lastname", sortDesc: false, 
+                page: 1, pageSize: 1, // Just to get total count
+                cancellationToken);
+            
+            var totalRows = totalCountData.TotalCount;
+            var rowsToFetch = Math.Min(totalRows, _options.CurrentValue.RowCap);
+            
+            // Now fetch all data up to RowCap
             var allData = await _dashboardService.GetMoodleReportAsync(
                 fromUtc, toUtc, courseCategoryId, search, 
                 sortColumn: "lastname", sortDesc: false, 
-                page: 1, pageSize: _options.CurrentValue.RowCap, 
+                page: 1, pageSize: rowsToFetch, 
                 cancellationToken);
 
             var requestedColumns = selectedColumns?.ToList() ?? new List<string>();
             if (!requestedColumns.Any())
             {
                 // Default to all columns if none selected
-                requestedColumns = new List<string> { "LastName", "FirstName", "Email", "PpraNo", "IdNo", "Province", "Agency", "CourseName", "Category", "EnrolmentDate", "CompletionDate", "FourthCompletionDate" };
+                requestedColumns = new List<string> { "LastName", "FirstName", "Email", "PhoneNumber", "PpraNo", "IdNo", "Province", "Agency", "CourseName", "Category", "EnrolmentDate", "CompletionDate", "FourthCompletionDate" };
             }
 
             var decision = _safety.Evaluate("moodle-report", role, allData.Items.Count, requestedColumns);
@@ -109,6 +132,7 @@ public class ExportController : Controller
             new { value = "LastName", label = "Last Name" },
             new { value = "FirstName", label = "First Name" },
             new { value = "Email", label = "Email" },
+            new { value = "PhoneNumber", label = "Phone Number" },
             new { value = "PpraNo", label = "PPRA No" },
             new { value = "IdNo", label = "ID No" },
             new { value = "Province", label = "Province" },

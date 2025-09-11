@@ -40,6 +40,10 @@ builder.Services
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequireUppercase = false;
         options.User.RequireUniqueEmail = true;
+        // Security hardening: strict lockout policy
+        options.Lockout.AllowedForNewUsers = true;
+        options.Lockout.MaxFailedAccessAttempts = 3;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromDays(30);
     })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
@@ -67,28 +71,49 @@ builder.Services.ConfigureApplicationCookie(options =>
     }
 });
 
+// User Management Services
+builder.Services.AddScoped<Charter.Reporter.Application.Services.Users.IUserManagementService, Charter.Reporter.Infrastructure.Services.Users.UserManagementService>();
+
 // Email + Dashboard DI
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
-if (builder.Environment.IsDevelopment())
+
+// Priority for email sending:
+// 1. SendGrid (if API key is available) - preferred for all environments
+// 2. SMTP (if properly configured)
+// 3. DevNoop (only as last resort in development)
+var sendGridKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+var smtpHost = builder.Configuration["Email:Host"];
+
+if (!string.IsNullOrWhiteSpace(sendGridKey))
 {
-    var sendGridKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
-    var smtpHost = builder.Configuration["Email:Host"];
-    if (!string.IsNullOrWhiteSpace(sendGridKey))
+    // Use SendGrid if API key is available (in any environment)
+    builder.Services.AddScoped<IEmailSender, SendGridEmailSender>();
+    builder.Services.AddLogging(logging =>
     {
-        builder.Services.AddScoped<IEmailSender, SendGridEmailSender>();
-    }
-    else if (!string.IsNullOrWhiteSpace(smtpHost) && !string.Equals(smtpHost, "smtp.example.com", StringComparison.OrdinalIgnoreCase))
-    {
-        builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
-    }
-    else
-    {
-        builder.Services.AddScoped<IEmailSender, DevNoopEmailSender>();
-    }
+        logging.AddConsole();
+    });
+    Console.WriteLine($"Email Service: Using SendGrid (API key configured)");
+}
+else if (!string.IsNullOrWhiteSpace(smtpHost) && !string.Equals(smtpHost, "smtp.example.com", StringComparison.OrdinalIgnoreCase))
+{
+    // Use SMTP if properly configured
+    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+    Console.WriteLine($"Email Service: Using SMTP ({smtpHost})");
 }
 else
 {
-    builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+    if (builder.Environment.IsDevelopment())
+    {
+        // Only use DevNoop in development as last resort
+        builder.Services.AddScoped<IEmailSender, DevNoopEmailSender>();
+        Console.WriteLine("WARNING: Email Service: Using DevNoopEmailSender - emails will NOT be sent!");
+        Console.WriteLine("To enable real email sending, set SENDGRID_API_KEY environment variable");
+    }
+    else
+    {
+        // In production, fail if no email service is configured
+        throw new InvalidOperationException("No email service configured. Please set SENDGRID_API_KEY environment variable or configure SMTP settings.");
+    }
 }
 // Replace stub with MariaDB-backed service
 builder.Services.AddScoped<IDashboardService, MariaDbDashboardService>();

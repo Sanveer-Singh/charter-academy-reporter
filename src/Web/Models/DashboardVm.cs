@@ -14,4 +14,5 @@ public class DashboardVm
 	public int? SelectedCategoryId { get; set; }
 	public IReadOnlyList<CourseCategory>? Categories { get; set; }
 	public bool IsCharterAdmin { get; set; }
+	public bool CanExport { get; set; }
 }

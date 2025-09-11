@@ -33,6 +33,7 @@ public class MoodleReportRow
     public string Province { get; set; } = string.Empty;
     public string Agency { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = "-"; // Default to dash when no phone available
     public string CourseName { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public DateTime EnrolmentDate { get; set; }

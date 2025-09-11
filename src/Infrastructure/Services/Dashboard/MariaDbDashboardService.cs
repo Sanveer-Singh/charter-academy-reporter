@@ -92,6 +92,7 @@ ORDER BY c.name";
                     "firstname" => "FirstName",
                     "lastname" => "LastName",
                     "email" => "Email",
+                    "phonenumber" => "PhoneNumber",
                     "province" => "Province",
                     "agency" => "Agency",
                     "coursename" => "CourseName",
@@ -144,10 +145,11 @@ CustomFields AS (
         MAX(CASE WHEN uif.shortname = 'ppranumber' THEN uid.data END) as ppra_no,
         MAX(CASE WHEN uif.shortname = 'said' THEN uid.data END) as id_no,
         MAX(CASE WHEN uif.shortname IN ('region_province', 'province', 'user_province', 'employerprovince', 'workprovince') THEN uid.data END) as province,
-        MAX(CASE WHEN uif.shortname IN ('region_agency', 'agency_name', 'agency', 'agencyname', 'employeragency', 'workagency', 'agencycompany') THEN uid.data END) as agency
+        MAX(CASE WHEN uif.shortname IN ('region_agency', 'agency_name', 'agency', 'agencyname', 'employeragency', 'workagency', 'agencycompany') THEN uid.data END) as agency,
+        MAX(CASE WHEN uif.shortname IN ('phone', 'phonenumber', 'mobile', 'mobilenumber', 'cellphone', 'telephone', 'contact', 'contactnumber') THEN uid.data END) as phone_custom
     FROM {prefix}user_info_data uid
     JOIN {prefix}user_info_field uif ON uid.fieldid = uif.id
-    WHERE uif.shortname IN ('ppranumber', 'said', 'region_province', 'province', 'user_province', 'employerprovince', 'workprovince', 'region_agency', 'agency_name', 'agency', 'agencyname', 'employeragency', 'workagency', 'agencycompany')
+    WHERE uif.shortname IN ('ppranumber', 'said', 'region_province', 'province', 'user_province', 'employerprovince', 'workprovince', 'region_agency', 'agency_name', 'agency', 'agencyname', 'employeragency', 'workagency', 'agencycompany', 'phone', 'phonenumber', 'mobile', 'mobilenumber', 'cellphone', 'telephone', 'contact', 'contactnumber')
     GROUP BY uid.userid
 ),
 Base AS (
@@ -160,6 +162,7 @@ Base AS (
         COALESCE(NULLIF(cf.province, ''), '-') AS Province,
         COALESCE(NULLIF(cf.agency, ''), '-') AS Agency,
         u.email AS Email,
+        COALESCE(NULLIF(COALESCE(NULLIF(u.phone1, ''), NULLIF(u.phone2, ''), cf.phone_custom), ''), '-') AS PhoneNumber,
         c.fullname AS CourseName, 
         cat.name AS Category,
         ef.effective_enrolment_time AS EnrolmentEpoch,
@@ -177,7 +180,7 @@ Base AS (
       AND (@categoryId IS NULL OR c.category = @categoryId)
       AND (
             @search IS NULL OR @search = '' OR (
-                u.firstname LIKE @like OR u.lastname LIKE @like OR u.email LIKE @like OR c.fullname LIKE @like OR cat.name LIKE @like OR cf.ppra_no LIKE @like OR cf.id_no LIKE @like OR cf.province LIKE @like OR cf.agency LIKE @like
+                u.firstname LIKE @like OR u.lastname LIKE @like OR u.email LIKE @like OR c.fullname LIKE @like OR cat.name LIKE @like OR cf.ppra_no LIKE @like OR cf.id_no LIKE @like OR cf.province LIKE @like OR cf.agency LIKE @like OR u.phone1 LIKE @like OR u.phone2 LIKE @like OR cf.phone_custom LIKE @like
             )
       )
 )
@@ -190,6 +193,7 @@ SELECT SQL_CALC_FOUND_ROWS
     Province,
     Agency,
     Email,
+    PhoneNumber,
     CourseName,
     Category,
     FROM_UNIXTIME(EnrolmentEpoch) AS EnrolmentDate,

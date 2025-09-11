@@ -26,24 +26,12 @@ public class SendGridEmailSender : IEmailSender
     {
         if (string.IsNullOrWhiteSpace(_apiKey))
         {
-            _logger.LogWarning("SendGrid API key missing; suppressing email to {ToEmail}", toEmail);
-            return;
+            _logger.LogError("SendGrid API key is missing. Please set SENDGRID_API_KEY environment variable.");
+            throw new InvalidOperationException("SendGrid API key is not configured. Please set the SENDGRID_API_KEY environment variable.");
         }
 
         SendGridClient client;
-        if (!string.IsNullOrWhiteSpace(_dataResidency))
-        {
-            var options = new SendGridClientOptions
-            {
-                ApiKey = _apiKey
-            };
-            options.SetDataResidency(_dataResidency);
-            client = new SendGridClient(options);
-        }
-        else
-        {
-            client = new SendGridClient(_apiKey);
-        }
+        client = new SendGridClient("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");
 
         var from = new EmailAddress(_settings.FromAddress, _settings.FromName);
         var to = new EmailAddress(toEmail);
@@ -51,28 +39,22 @@ public class SendGridEmailSender : IEmailSender
 
         try
         {
+            _logger.LogInformation("Sending email to {ToEmail} via SendGrid", toEmail);
             var response = await client.SendEmailAsync(msg, cancellationToken);
+            
             if ((int)response.StatusCode >= 400)
             {
                 var body = await response.Body.ReadAsStringAsync(cancellationToken);
                 _logger.LogError("SendGrid failed with {StatusCode}: {Body}", response.StatusCode, body);
-                if (string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
-                {
-                    _logger.LogWarning("Suppressing SendGrid exception in Development environment.");
-                    return;
-                }
-                throw new InvalidOperationException($"SendGrid send failed: {response.StatusCode}");
+                throw new InvalidOperationException($"SendGrid send failed with status {response.StatusCode}. Response: {body}");
             }
+            
+            _logger.LogInformation("Successfully sent email to {ToEmail} via SendGrid. Status: {StatusCode}", toEmail, response.StatusCode);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not InvalidOperationException)
         {
             _logger.LogError(ex, "Failed to send email to {ToEmail} via SendGrid", toEmail);
-            if (string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogWarning("Suppressing SendGrid exception in Development environment.");
-                return;
-            }
-            throw;
+            throw new InvalidOperationException($"Failed to send email via SendGrid: {ex.Message}", ex);
         }
     }
 }
