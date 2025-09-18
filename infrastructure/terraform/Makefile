@@ -136,11 +136,11 @@ backup-status:
 # Show costs
 costs:
 	@echo "Estimated monthly costs for af-south-1:"
-	@echo "- EC2 t3.small: ~$$15/month"
-	@echo "- EBS 30GB gp3: ~$$3/month"
+	@echo "- EC2 t3.micro: ~$$9/month"
+	@echo "- EBS 20GB gp3: ~$$2/month"
 	@echo "- Route 53: ~$$0.50/month"
 	@echo "- CloudWatch: ~$$2/month"
-	@echo "- Total: ~$$20.50/month"
+	@echo "- Total: ~$$13.50/month"
 
 
 

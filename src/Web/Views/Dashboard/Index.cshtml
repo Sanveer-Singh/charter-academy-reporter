@@ -198,14 +198,16 @@
 <div class="card mb-4">
     <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
         <div class="d-flex align-items-center gap-3">
-            <div class="h6 m-0" id="report-title">Moodle Student Completion Report</div>
+            <div class="h6 m-0" id="report-title">Student Completion Report</div>
             @if (Model.ShowWordPressToggle)
             {
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="wordpress-toggle" title="Toggle between Moodle and WordPress reports">
-                    <label class="form-check-label small text-muted" for="wordpress-toggle">
-                        WordPress Mode
-                    </label>
+                <div class="d-flex align-items-center gap-2">
+                    <label for="report-mode-select" class="form-label small text-muted mb-0">Data Source:</label>
+                    <select id="report-mode-select" class="form-select form-select-sm" style="min-width: 120px;">
+                        <option value="moodle" selected>Moodle</option>
+                        <option value="wordpress">WordPress</option>
+                        <option value="both">Both (Merged)</option>
+                    </select>
                 </div>
             }
         </div>
@@ -217,15 +219,12 @@
                 <option value="50">50</option>
                 <option value="100">100</option>
             </select>
-            @if (Model.ShowWordPressToggle)
-            {
-                <div class="form-check" id="fourth-completion-toggle" style="display: none;">
-                    <input class="form-check-input" type="checkbox" id="show-only-fourth" title="Show only 4th completion per user">
-                    <label class="form-check-label small text-nowrap" for="show-only-fourth">
-                        4th Only
-                    </label>
-                </div>
-            }
+            <div class="form-check" id="per-user-toggle">
+                <input class="form-check-input" type="checkbox" id="per-user" title="Show one record per user (4th completion date where applicable)">
+                <label class="form-check-label small text-nowrap" for="per-user">
+                    Per User
+                </label>
+            </div>
             <button id="report-search-btn" class="btn btn-outline-primary"><i class="fas fa-search"></i></button>
         </div>
     </div>
@@ -327,15 +326,15 @@
         const form = document.getElementById('filters');
         // Report UI elements (created below after markup is added)
         let reportSearchInput, reportSearchBtn, reportTbody, reportPager, reportCount, reportPageSizeSel, reportSortableHeaders;
-        let wordPressToggle, fourthCompletionToggle, showOnlyFourthCheckbox, reportTitle;
+        let reportModeSelect, reportTitle, perUserToggle, perUserCheckbox;
         // Report state
         let reportPage = 1;
         let reportPageSize = 25;
         let reportSortColumn = 'lastname';
         let reportSortDesc = false;
         let reportSearch = '';
-        let isWordPressMode = false;
-        let showOnlyFourthCompletion = false;
+        let reportMode = 'moodle'; // 'moodle', 'wordpress', 'both'
+        let perUser = false;
 
         function setCustomVisibility() {
             const custom = preset.value === 'custom';
@@ -451,6 +450,18 @@
             });
         }
 
+        // Toggle visibility of completion columns for WordPress mode
+        function applyModeColumnVisibility() {
+            const hide = reportMode === 'wordpress';
+            const completionHeaders = Array.from(document.querySelectorAll('th[data-sort="completionDate"], th[data-sort="fourthCompletionDate"]'));
+            completionHeaders.forEach(h => h.style.display = hide ? 'none' : '');
+            const enrolHeader = document.querySelector('th[data-sort="enrolmentDate"]');
+            if (enrolHeader) enrolHeader.style.display = hide ? 'none' : '';
+            document.querySelectorAll('td.col-enrolment, td.col-completion, td.col-fourth').forEach(td => {
+                td.style.display = hide ? 'none' : '';
+            });
+        }
+
         async function loadReport() {
             if (!reportTbody) initReportRefs();
             const params = buildFilterParams();
@@ -460,21 +471,25 @@
             params.set('page', String(reportPage));
             params.set('pageSize', String(reportPageSize));
             
-            // Add report mode parameter and WordPress-specific parameters
-            params.set('reportMode', isWordPressMode ? 'wordpress' : 'moodle');
-            if (isWordPressMode) {
-                params.set('showOnlyFourthCompletion', showOnlyFourthCompletion ? 'true' : 'false');
-            }
+            // Add report mode parameter and per-user parameter
+            params.set('reportMode', reportMode);
+            params.set('perUser', perUser ? 'true' : 'false');
             
             // Always use the MoodleReport endpoint - it now handles both modes
             const res = await fetch(`/Dashboard/MoodleReport?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
             if (!res.ok) return;
             const data = await res.json();
             const items = data.items || [];
-            // Render rows
-            reportTbody.innerHTML = items.map(r => `
-                <tr>
-                    <td>${r.lastName ?? ''}</td>
+            // Render rows with highlighting for merged data
+            reportTbody.innerHTML = items.map(r => {
+                const rowClass = r.highlightRed ? 'table-danger' : (r.highlightBlue ? 'table-info' : '');
+                const dataSourceBadge = r.dataSource === 'moodle' ? '<span class="badge bg-success">M</span>' :
+                                      r.dataSource === 'wordpress' ? '<span class="badge bg-primary">W</span>' :
+                                      r.dataSource === 'merged' ? '<span class="badge bg-warning">M+W</span>' : '';
+                
+                return `
+                <tr class="${rowClass}">
+                    <td>${r.lastName ?? ''} ${dataSourceBadge}</td>
                     <td>${r.firstName ?? ''}</td>
                     <td class="text-nowrap">${r.email ?? ''}</td>
                     <td>${r.phoneNumber ?? '-'}</td>
@@ -484,11 +499,12 @@
                     <td>${r.agency ?? ''}</td>
                     <td>${r.courseName ?? ''}</td>
                     <td>${r.category ?? ''}</td>
-                    <td class="text-nowrap">${fmtDate(r.enrolmentDate)}</td>
-                    <td class="text-nowrap">${fmtDate(r.completionDate)}</td>
-                    <td class="text-nowrap">${fmtDate(r.fourthCompletionDate)}</td>
+                    <td class="text-nowrap col-enrolment">${fmtDate(r.enrolmentDate)}</td>
+                    <td class="text-nowrap col-completion">${fmtDate(r.completionDate)}</td>
+                    <td class="text-nowrap col-fourth">${fmtDate(r.fourthCompletionDate)}</td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
             // Count
             const total = data.totalCount ?? 0;
             const page = data.page ?? reportPage;
@@ -520,6 +536,9 @@
                 });
             });
             updateSortIndicators();
+            if (typeof applyModeColumnVisibility === 'function') {
+                applyModeColumnVisibility();
+            }
         }
 
         function initReportRefs() {
@@ -530,9 +549,9 @@
             reportCount = document.getElementById('report-count');
             reportPageSizeSel = document.getElementById('report-page-size');
             reportSortableHeaders = Array.from(document.querySelectorAll('th[data-sort]'));
-            wordPressToggle = document.getElementById('wordpress-toggle');
-            fourthCompletionToggle = document.getElementById('fourth-completion-toggle');
-            showOnlyFourthCheckbox = document.getElementById('show-only-fourth');
+            reportModeSelect = document.getElementById('report-mode-select');
+            perUserToggle = document.getElementById('per-user-toggle');
+            perUserCheckbox = document.getElementById('per-user');
             reportTitle = document.getElementById('report-title');
 
             reportPageSizeSel.addEventListener('change', async () => {
@@ -570,21 +589,19 @@
                 });
             });
 
-            // WordPress toggle functionality
-            if (wordPressToggle) {
-                wordPressToggle.addEventListener('change', async () => {
-                    isWordPressMode = wordPressToggle.checked;
+            // Report mode dropdown functionality
+            if (reportModeSelect) {
+                reportModeSelect.addEventListener('change', async () => {
+                    reportMode = reportModeSelect.value;
                     
-                    // Update report title
+                    // Update report title based on mode
                     if (reportTitle) {
-                        reportTitle.textContent = isWordPressMode ? 
-                            'WordPress Student Completion Report' : 
-                            'Moodle Student Completion Report';
-                    }
-                    
-                    // Show/hide WordPress-specific controls
-                    if (fourthCompletionToggle) {
-                        fourthCompletionToggle.style.display = isWordPressMode ? 'block' : 'none';
+                        const titles = {
+                            'moodle': 'Moodle Student Completion Report',
+                            'wordpress': 'WordPress Student Completion Report',
+                            'both': 'Merged Student Completion Report'
+                        };
+                        reportTitle.textContent = titles[reportMode] || 'Student Completion Report';
                     }
                     
                     // Reset to first page and reload
@@ -593,21 +610,26 @@
                 });
             }
 
-            // Fourth completion toggle (WordPress only)
-            if (showOnlyFourthCheckbox) {
-                showOnlyFourthCheckbox.addEventListener('change', async () => {
-                    showOnlyFourthCompletion = showOnlyFourthCheckbox.checked;
+            // Per-user toggle (all modes)
+            if (perUserCheckbox) {
+                perUserCheckbox.addEventListener('change', async () => {
+                    perUser = perUserCheckbox.checked;
                     reportPage = 1;
                     await loadReport();
                 });
             }
+
+            // (removed duplicate applyModeColumnVisibility inside initReportRefs)
         }
 
         // Initialize report after DOM is ready
         window.addEventListener('DOMContentLoaded', async () => {
             initReportRefs();
-            await loadReport();
             initExportModal();
+            await loadReport();
+            if (typeof applyModeColumnVisibility === 'function') {
+                applyModeColumnVisibility();
+            }
         });
 
         // Export Modal Functionality
@@ -807,10 +829,10 @@
             deselectAllBtn.addEventListener('click', () => setAllColumns(false));
 
             confirmExportBtn.addEventListener('click', async () => {
-                const selectedColumns = getSelectedColumns();
+                let selectedColumns = getSelectedColumns();
                 if (selectedColumns.length === 0) {
-                    // This shouldn't happen due to button disabling, but just in case
-                    return;
+                    // Fallback to all available columns to ensure export proceeds
+                    selectedColumns = (availableColumns || []).map(c => c.value);
                 }
 
                 // Show loading state
@@ -859,12 +881,17 @@
                         formData.append('search', reportSearch);
                     }
 
-                    // Make the export request to appropriate endpoint
-                    const exportEndpoint = isWordPressMode ? '/WordPressReport/ExportExcel' : '/Export/ExcelMoodleReport';
-                    
-                    // Add WordPress-specific parameters
-                    if (isWordPressMode) {
-                        formData.append('showOnlyFourthCompletion', showOnlyFourthCompletion ? 'true' : 'false');
+                    // Make the export request to appropriate endpoint based on report mode
+                    let exportEndpoint;
+                    if (reportMode === 'wordpress') {
+                        exportEndpoint = '/WordPressReport/ExportExcel';
+                        // WordPress export ignores completion logic; no perUser needed
+                    } else if (reportMode === 'both') {
+                        exportEndpoint = '/Export/ExcelMergedReport';
+                        formData.append('perUser', perUser ? 'true' : 'false');
+                    } else {
+                        exportEndpoint = '/Export/ExcelMoodleReport';
+                        formData.append('perUser', perUser ? 'true' : 'false');
                     }
                     
                     const response = await fetch(exportEndpoint, {
@@ -886,7 +913,8 @@
                     
                     // Extract filename from response headers if available
                     const contentDisposition = response.headers.get('Content-Disposition');
-                    let fileName = isWordPressMode ? 'WordPress_Report.xlsx' : 'Moodle_Report.xlsx';
+                    let fileName = reportMode === 'wordpress' ? 'WordPress_Report.xlsx' : 
+                                 reportMode === 'both' ? 'Merged_Report.xlsx' : 'Moodle_Report.xlsx';
                     if (contentDisposition) {
                         const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
                         if (fileNameMatch && fileNameMatch[1]) {

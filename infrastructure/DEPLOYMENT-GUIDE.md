@@ -9,16 +9,25 @@ This guide walks you through deploying the Charter Reporter App using the provid
 ```bash
 cd infrastructure/terraform
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your values
-make init plan apply
-# Configure DNS, run SSL setup, deploy app
+# Edit terraform.tfvars with your values (see checklist below)
+
+# Optional: run pre-flight checks
+bash ../scripts/pre-deployment-check.sh
+
+make init
+make plan
+make apply
+
+# After apply: set DNS to the Elastic IP, then
+make connect
+sudo /usr/local/bin/setup-ssl.sh
 ```
 
 ## 📝 Detailed Step-by-Step Guide
 
 ### Prerequisites Checklist
 
-- [ ] AWS CLI configured with `af-south-1` region
+- [ ] AWS CLI configured with `af-south-1` region (Cape Town)
 - [ ] Terraform >= 1.6 installed
 - [ ] Domain name ready for configuration
 - [ ] Read-only credentials for existing MariaDB databases
@@ -39,14 +48,14 @@ aws ec2 describe-subnets --region af-south-1 --filters "Name=vpc-id,Values=YOUR_
 aws ec2 describe-security-groups --region af-south-1 --filters "Name=vpc-id,Values=YOUR_VPC_ID" --query 'SecurityGroups[?contains(Description,`mariadb`) || contains(GroupName,`mariadb`)].[GroupId,GroupName,Description]' --output table
 ```
 
-### Step 2: Configure Terraform Variables
+### Step 2: Configure Terraform Variables (Minimal Cost Defaults)
 
 ```bash
 cd infrastructure/terraform
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-Edit `terraform.tfvars` with your actual values:
+Edit `terraform.tfvars` with your actual values (t3.micro, 20GB defaults):
 
 ```hcl
 # === REQUIRED: Update these with your actual infrastructure ===
@@ -64,9 +73,9 @@ mariadb_moodle_password = "your_moodle_readonly_password"
 mariadb_woo_password    = "your_woo_readonly_password"
 
 # === OPTIONAL: Customize as needed ===
-instance_type       = "t3.small"  # or "t3.micro" for lower cost
-ebs_volume_size     = 30          # GB
-create_route53_zone = false       # Set true if Terraform should manage DNS
+instance_type       = "t3.micro"  # start as small as possible
+ebs_volume_size     = 20          # GB
+create_route53_zone = false       # leave false unless hosting DNS in this account
 ```
 
 ### Step 3: Deploy Infrastructure
@@ -132,14 +141,21 @@ cd /path/to/charter-reporter-source
 dotnet publish ./src/Web/Charter.Reporter.Web.csproj -c Release -o ./publish
 cd ./publish && zip -r ../charter-reporter-initial.zip . && cd ..
 
+# Resolve S3 artifacts bucket and instance id from SSM/tags
+S3_BUCKET=$(aws ssm get-parameter --name "/charter-reporter/deployment/artifacts_bucket" --region af-south-1 --query 'Parameter.Value' --output text)
+INSTANCE_ID=$(aws ec2 describe-instances \
+  --region af-south-1 \
+  --filters Name=tag:Project,Values=Charter-Reporter Name=instance-state-name,Values=running \
+  --query 'Reservations[0].Instances[0].InstanceId' --output text)
+
 # Upload to S3
-aws s3 cp charter-reporter-initial.zip s3://YOUR_S3_BUCKET/charter-reporter-initial.zip --region af-south-1
+aws s3 cp charter-reporter-initial.zip s3://$S3_BUCKET/charter-reporter-initial.zip --region af-south-1
 
 # Deploy via SSM
 aws ssm send-command \
-  --instance-ids "YOUR_INSTANCE_ID" \
+  --instance-ids "$INSTANCE_ID" \
   --document-name "AWS-RunShellScript" \
-  --parameters 'commands=["sudo /usr/local/bin/deploy-charter-reporter.sh s3://YOUR_S3_BUCKET/charter-reporter-initial.zip"]' \
+  --parameters 'commands=["sudo /usr/local/bin/deploy-charter-reporter.sh s3://'$S3_BUCKET'/charter-reporter-initial.zip"]' \
   --region af-south-1
 ```
 
@@ -172,7 +188,7 @@ curl -f https://reporter.charteracademy.co.za/health
 The app will need these configuration files created or updated:
 
 1. **appsettings.Production.json** - Already configured via Parameter Store
-2. **Program.cs modifications** - Add Parameter Store integration (see AWS Deployment Guide Appendix C)
+2. **Program.cs** - Ensure SSM Parameter Store config binding is enabled in `Production`.
 3. **Database migrations** - Run on first deployment
 
 ### Initial Admin User
@@ -311,6 +327,13 @@ aws ce get-cost-and-usage \
 - Review backup retention based on actual needs
 - Scale instance size based on CloudWatch metrics
 
+Minimal profile (af-south-1 typical):
+- EC2 t3.micro: ~$9/mo
+- EBS 20GB gp3: ~$2/mo
+- CloudWatch logs/metrics: ~$2/mo
+- Optional Route 53: ~$0.50/mo
+- Total: ~$13.50/mo
+
 ## 🔄 Updates and Maintenance
 
 ### Infrastructure Updates
@@ -349,6 +372,26 @@ For application issues:
 3. Test MariaDB connectivity
 4. Review the main project README.md for application-specific guidance
 
+
+## ✅ Values You Must Update (Checklist)
+
+Update these in `infrastructure/terraform/terraform.tfvars` before `make apply`:
+
+- VPC: `vpc_id` (must be the same VPC as the existing MariaDBs)
+- Subnet: `public_subnet_id` (public subnet in that VPC)
+- MariaDB SG: `mariadb_security_group_id` (SG attached to your RDS/MariaDB)
+- Domain: `domain_name` (e.g., reporter.charteracademy.co.za)
+- Emails: `admin_email`, `alert_email`
+- DB passwords: `mariadb_moodle_password`, `mariadb_woo_password`
+- Optional SMTP: `smtp_host`, `smtp_username`, `smtp_password`, `smtp_port`
+- Instance size: `instance_type` (default t3.micro), `ebs_volume_size` (default 20)
+- DNS management: `create_route53_zone` (keep false unless hosting DNS in AWS)
+- Retention: `log_retention_days`, `backup_retention_days`
+
+Other places automatically aligned:
+- Security Groups: Terraform creates a web SG and adds an ingress rule to your MariaDB SG allowing port 3306 from the app SG.
+- IAM: Scoped to current account; app reads only `/charter-reporter/*` SSM params, and S3 artifacts bucket.
+- Region: Provider and scripts default to `af-south-1` (Cape Town).
 
 
 

@@ -43,14 +43,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Get infrastructure outputs
+      - name: Resolve infrastructure values (from SSM)
         id: infra
-        working-directory: ./infrastructure/terraform
         run: |
-          # Get Terraform outputs
-          echo "instance_id=$(terraform output -raw instance_id)" >> $GITHUB_OUTPUT
-          echo "s3_bucket=$(terraform output -raw s3_artifacts_bucket)" >> $GITHUB_OUTPUT
-          echo "domain_name=$(terraform output -raw deployment_info | jq -r '.domain_name')" >> $GITHUB_OUTPUT
+          # Read S3 bucket from Parameter Store
+          S3_BUCKET=$(aws ssm get-parameter --name "/charter-reporter/deployment/artifacts_bucket" --region $AWS_REGION --query 'Parameter.Value' --output text)
+          echo "s3_bucket=$S3_BUCKET" >> $GITHUB_OUTPUT
+
+          # Discover instance via tag (fallback if Terraform outputs unavailable)
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --region $AWS_REGION \
+            --filters Name=tag:Project,Values=Charter-Reporter Name=instance-state-name,Values=running \
+            --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+
+          # Domain name from Parameter Store
+          DOMAIN_NAME=$(aws ssm get-parameter --name "/charter-reporter/app/domain" --region $AWS_REGION --query 'Parameter.Value' --output text)
+          echo "domain_name=$DOMAIN_NAME" >> $GITHUB_OUTPUT
 
       - name: Restore dependencies
         run: dotnet restore Charter.Reporter.sln

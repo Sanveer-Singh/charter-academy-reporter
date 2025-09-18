@@ -33,7 +33,7 @@ variable "mariadb_security_group_id" {
 variable "instance_type" {
   description = "EC2 instance type for the web server"
   type        = string
-  default     = "t3.small"
+  default     = "t3.micro"
   validation {
     condition = contains([
       "t3.micro", "t3.small", "t3.medium", "t3.large"
@@ -45,7 +45,7 @@ variable "instance_type" {
 variable "ebs_volume_size" {
   description = "Size of the root EBS volume in GB"
   type        = number
-  default     = 30
+  default     = 20
   validation {
     condition     = var.ebs_volume_size >= 20 && var.ebs_volume_size <= 100
     error_message = "EBS volume size must be between 20 and 100 GB."

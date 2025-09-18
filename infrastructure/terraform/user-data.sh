@@ -25,6 +25,10 @@ echo "Installing and configuring Nginx..."
 dnf install -y nginx
 systemctl enable nginx
 
+# Install required utilities
+echo "Installing required utilities (unzip, sqlite, awscli)..."
+dnf install -y unzip sqlite awscli
+
 # Install Certbot for Let's Encrypt
 echo "Installing Certbot..."
 dnf install -y python3-certbot-nginx

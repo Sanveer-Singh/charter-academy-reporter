@@ -11,11 +11,16 @@ public class DashboardController : Controller
 {
     private readonly IDashboardService _dashboardService;
     private readonly IWordPressReportService _wordPressReportService;
+    private readonly IMergedReportService _mergedReportService;
 
-    public DashboardController(IDashboardService dashboardService, IWordPressReportService wordPressReportService)
+    public DashboardController(
+        IDashboardService dashboardService, 
+        IWordPressReportService wordPressReportService,
+        IMergedReportService mergedReportService)
     {
         _dashboardService = dashboardService;
         _wordPressReportService = wordPressReportService;
+        _mergedReportService = mergedReportService;
     }
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -67,29 +72,45 @@ public class DashboardController : Controller
         [FromQuery] bool sortDesc,
         [FromQuery] string? reportMode,
         [FromQuery] bool showOnlyFourthCompletion = false,
+        [FromQuery] bool perUser = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
         CancellationToken cancellationToken = default)
     {
         ComputeDateRange(preset, ref from, ref to);
         
-        // Check if we should use WordPress report instead
-        if (string.Equals(reportMode, "wordpress", StringComparison.OrdinalIgnoreCase) && User.IsInRole(AppRoles.CharterAdmin))
+        // Route to appropriate service based on report mode
+        if (User.IsInRole(AppRoles.CharterAdmin))
         {
-            var wpResult = await _wordPressReportService.GetWordPressReportAsync(from, to, categoryId, search, sortColumn, sortDesc, page, pageSize, showOnlyFourthCompletion, cancellationToken);
-            return Json(new
+            if (string.Equals(reportMode, "wordpress", StringComparison.OrdinalIgnoreCase))
             {
-                items = wpResult.Items,
-                totalCount = wpResult.TotalCount,
-                page = wpResult.Page,
-                pageSize = wpResult.PageSize,
-                showOnlyFourthCompletion,
-                reportMode = "wordpress"
-            });
+                var wpResult = await _wordPressReportService.GetWordPressReportAsync(from, to, categoryId, search, sortColumn, sortDesc, page, pageSize, showOnlyFourthCompletion, cancellationToken);
+                return Json(new
+                {
+                    items = wpResult.Items,
+                    totalCount = wpResult.TotalCount,
+                    page = wpResult.Page,
+                    pageSize = wpResult.PageSize,
+                    showOnlyFourthCompletion,
+                    reportMode = "wordpress"
+                });
+            }
+            else if (string.Equals(reportMode, "both", StringComparison.OrdinalIgnoreCase))
+            {
+                var mergedResult = await _mergedReportService.GetMergedReportAsync(from, to, categoryId, search, sortColumn, sortDesc, perUser, page, pageSize, cancellationToken);
+                return Json(new
+                {
+                    items = mergedResult.Items,
+                    totalCount = mergedResult.TotalCount,
+                    page = mergedResult.Page,
+                    pageSize = mergedResult.PageSize,
+                    reportMode = "both"
+                });
+            }
         }
         
         // Default to Moodle report
-        var result = await _dashboardService.GetMoodleReportAsync(from, to, categoryId, search, sortColumn, sortDesc, page, pageSize, cancellationToken);
+        var result = await _dashboardService.GetMoodleReportAsync(from, to, categoryId, search, sortColumn, sortDesc, perUser, page, pageSize, cancellationToken);
         return Json(new
         {
             items = result.Items,

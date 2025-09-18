@@ -72,6 +72,7 @@ ORDER BY c.name";
         string? search,
         string? sortColumn,
         bool sortDesc,
+        bool perUser,
         int page,
         int pageSize,
         CancellationToken cancellationToken)
@@ -112,7 +113,7 @@ ORDER BY c.name";
             var toEpoch = toUtc.HasValue ? new DateTimeOffset(toUtc.Value).ToUnixTimeSeconds() : long.MaxValue;
             var noDateFilter = fromUtc == null || toUtc == null;
 
-            var sql = $@"
+            var sqlNonDistinct = $@"
 WITH UserCompletionRank AS (
     SELECT userid, course, timecompleted,
            ROW_NUMBER() OVER(PARTITION BY userid ORDER BY timecompleted ASC) as completion_rank
@@ -120,7 +121,7 @@ WITH UserCompletionRank AS (
     WHERE timecompleted IS NOT NULL
 ),
 FourthCompletion AS (
-    SELECT userid, timecompleted AS fourth_completion_time
+    SELECT userid, course AS fourth_courseid, timecompleted AS fourth_completion_time
     FROM UserCompletionRank
     WHERE completion_rank = 4
 ),
@@ -204,11 +205,85 @@ ORDER BY {orderBy} {orderDir}
 LIMIT @limit OFFSET @offset;
 SELECT FOUND_ROWS();";
 
+            var sqlPerUser = $@"
+WITH UserCompletionRank AS (
+    SELECT userid, course, timecompleted,
+           ROW_NUMBER() OVER(PARTITION BY userid ORDER BY timecompleted ASC) as completion_rank
+    FROM {prefix}course_completions
+    WHERE timecompleted IS NOT NULL
+),
+FourthCompletion AS (
+    SELECT userid, course AS fourth_courseid, timecompleted AS fourth_completion_time
+    FROM UserCompletionRank
+    WHERE completion_rank = 4
+),
+CustomFields AS (
+    SELECT 
+        uid.userid,
+        MAX(CASE WHEN uif.shortname = 'ppranumber' THEN uid.data END) as ppra_no,
+        MAX(CASE WHEN uif.shortname = 'said' THEN uid.data END) as id_no,
+        MAX(CASE WHEN uif.shortname IN ('region_province', 'province', 'user_province', 'employerprovince', 'workprovince') THEN uid.data END) as province,
+        MAX(CASE WHEN uif.shortname IN ('region_agency', 'agency_name', 'agency', 'agencyname', 'employeragency', 'workagency', 'agencycompany') THEN uid.data END) as agency,
+        MAX(CASE WHEN uif.shortname IN ('phone', 'phonenumber', 'mobile', 'mobilenumber', 'cellphone', 'telephone', 'contact', 'contactnumber') THEN uid.data END) as phone_custom
+    FROM {prefix}user_info_data uid
+    JOIN {prefix}user_info_field uif ON uid.fieldid = uif.id
+    WHERE uif.shortname IN ('ppranumber', 'said', 'region_province', 'province', 'user_province', 'employerprovince', 'workprovince', 'region_agency', 'agency_name', 'agency', 'agencyname', 'employeragency', 'workagency', 'agencycompany', 'phone', 'phonenumber', 'mobile', 'mobilenumber', 'cellphone', 'telephone', 'contact', 'contactnumber')
+    GROUP BY uid.userid
+),
+Base AS (
+    SELECT
+        u.id AS UserId,
+        u.firstname AS FirstName,
+        u.lastname AS LastName,
+        COALESCE(cf.ppra_no, '') AS PpraNo,
+        COALESCE(cf.id_no, '') AS IdNo,
+        COALESCE(NULLIF(cf.province, ''), '-') AS Province,
+        COALESCE(NULLIF(cf.agency, ''), '-') AS Agency,
+        u.email AS Email,
+        COALESCE(NULLIF(COALESCE(NULLIF(u.phone1, ''), NULLIF(u.phone2, ''), cf.phone_custom), ''), '-') AS PhoneNumber,
+        c.fullname AS CourseName,
+        cat.name AS Category,
+        fc.fourth_completion_time AS FourthCompletionEpoch
+    FROM {prefix}user u
+    JOIN FourthCompletion fc ON u.id = fc.userid
+    JOIN {prefix}course c ON c.id = fc.fourth_courseid
+    JOIN {prefix}course_categories cat ON c.category = cat.id
+    LEFT JOIN CustomFields cf ON u.id = cf.userid
+    WHERE (@noDate = 1 OR fc.fourth_completion_time BETWEEN @fromEpoch AND @toEpoch)
+      AND (@categoryId IS NULL OR c.category = @categoryId)
+      AND (
+            @search IS NULL OR @search = '' OR (
+                u.firstname LIKE @like OR u.lastname LIKE @like OR u.email LIKE @like OR c.fullname LIKE @like OR cat.name LIKE @like OR cf.ppra_no LIKE @like OR cf.id_no LIKE @like OR cf.province LIKE @like OR cf.agency LIKE @like OR u.phone1 LIKE @like OR u.phone2 LIKE @like OR cf.phone_custom LIKE @like
+            )
+      )
+)
+SELECT SQL_CALC_FOUND_ROWS
+    UserId,
+    FirstName,
+    LastName,
+    PpraNo,
+    IdNo,
+    Province,
+    Agency,
+    Email,
+    PhoneNumber,
+    CourseName,
+    Category,
+    FROM_UNIXTIME(FourthCompletionEpoch) AS EnrolmentDate,
+    FROM_UNIXTIME(FourthCompletionEpoch) AS CompletionDate,
+    FROM_UNIXTIME(FourthCompletionEpoch) AS FourthCompletionDate
+FROM Base
+ORDER BY {orderBy} {orderDir}
+LIMIT @limit OFFSET @offset;
+SELECT FOUND_ROWS();";
+
             var like = string.IsNullOrWhiteSpace(search) ? null : $"%{search!.Trim()}%";
             var offset = Math.Max(page - 1, 0) * Math.Max(pageSize, 1);
             // Allow larger page sizes for export scenarios (up to 100K), but limit regular queries to 200 for performance
             var maxLimit = pageSize > 200 ? 100000 : 200;
             var limit = Math.Clamp(pageSize, 1, maxLimit);
+
+            var sql = perUser ? sqlPerUser : sqlNonDistinct;
 
             using var multi = await conn.QueryMultipleAsync(new CommandDefinition(sql, new
             {

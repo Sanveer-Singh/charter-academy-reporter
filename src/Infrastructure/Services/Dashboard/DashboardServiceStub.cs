@@ -23,7 +23,7 @@ public class DashboardServiceStub : IDashboardService
         return Task.FromResult(empty);
     }
 
-    public Task<PagedResult<MoodleReportRow>> GetMoodleReportAsync(DateTime? fromUtc, DateTime? toUtc, long? courseCategoryId, string? search, string? sortColumn, bool sortDesc, int page, int pageSize, CancellationToken cancellationToken)
+    public Task<PagedResult<MoodleReportRow>> GetMoodleReportAsync(DateTime? fromUtc, DateTime? toUtc, long? courseCategoryId, string? search, string? sortColumn, bool sortDesc, bool perUser, int page, int pageSize, CancellationToken cancellationToken)
     {
         return Task.FromResult(new PagedResult<MoodleReportRow>(Array.Empty<MoodleReportRow>(), 0, page, pageSize));
     }

@@ -12,6 +12,7 @@ public interface IDashboardService
         string? search,
         string? sortColumn,
         bool sortDesc,
+        bool perUser,
         int page,
         int pageSize,
         CancellationToken cancellationToken);

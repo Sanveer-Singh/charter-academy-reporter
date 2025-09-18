@@ -27,6 +27,9 @@ provider "aws" {
   }
 }
 
+# Current account identity (for scoping IAM policies)
+data "aws_caller_identity" "current" {}
+
 # Data sources to reference existing infrastructure
 data "aws_vpc" "existing" {
   id = var.vpc_id
@@ -79,31 +82,12 @@ resource "aws_security_group" "charter_reporter_web" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Outbound HTTPS for AWS APIs, Let's Encrypt, packages
+  # Minimal, reliable outbound: allow all egress
   egress {
-    description = "HTTPS outbound"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Outbound HTTP for package updates and redirects
-  egress {
-    description = "HTTP outbound"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # MariaDB access to existing databases
-  egress {
-    description     = "MariaDB to existing databases"
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [data.aws_security_group.mariadb.id]
   }
 
   tags = {
@@ -171,7 +155,7 @@ resource "aws_iam_role_policy" "parameter_store_access" {
           "ssm:GetParameters"
         ]
         Resource = [
-          "arn:aws:ssm:${var.aws_region}:*:parameter/charter-reporter/*"
+          "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/charter-reporter/*"
         ]
       },
       {
