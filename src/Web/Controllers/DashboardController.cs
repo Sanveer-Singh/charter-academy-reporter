@@ -10,10 +10,12 @@ namespace Charter.Reporter.Web.Controllers;
 public class DashboardController : Controller
 {
     private readonly IDashboardService _dashboardService;
+    private readonly IWordPressReportService _wordPressReportService;
 
-    public DashboardController(IDashboardService dashboardService)
+    public DashboardController(IDashboardService dashboardService, IWordPressReportService wordPressReportService)
     {
         _dashboardService = dashboardService;
+        _wordPressReportService = wordPressReportService;
     }
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -35,7 +37,8 @@ public class DashboardController : Controller
             SelectedPreset = "last-3-months",
             Categories = categories,
             IsCharterAdmin = isCharterAdmin,
-            CanExport = canExport
+            CanExport = canExport,
+            ShowWordPressToggle = isCharterAdmin
         };
         return View(vm);
     }
@@ -62,18 +65,38 @@ public class DashboardController : Controller
         [FromQuery] string? search,
         [FromQuery] string? sortColumn,
         [FromQuery] bool sortDesc,
+        [FromQuery] string? reportMode,
+        [FromQuery] bool showOnlyFourthCompletion = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
         CancellationToken cancellationToken = default)
     {
         ComputeDateRange(preset, ref from, ref to);
+        
+        // Check if we should use WordPress report instead
+        if (string.Equals(reportMode, "wordpress", StringComparison.OrdinalIgnoreCase) && User.IsInRole(AppRoles.CharterAdmin))
+        {
+            var wpResult = await _wordPressReportService.GetWordPressReportAsync(from, to, categoryId, search, sortColumn, sortDesc, page, pageSize, showOnlyFourthCompletion, cancellationToken);
+            return Json(new
+            {
+                items = wpResult.Items,
+                totalCount = wpResult.TotalCount,
+                page = wpResult.Page,
+                pageSize = wpResult.PageSize,
+                showOnlyFourthCompletion,
+                reportMode = "wordpress"
+            });
+        }
+        
+        // Default to Moodle report
         var result = await _dashboardService.GetMoodleReportAsync(from, to, categoryId, search, sortColumn, sortDesc, page, pageSize, cancellationToken);
         return Json(new
         {
             items = result.Items,
             totalCount = result.TotalCount,
             page = result.Page,
-            pageSize = result.PageSize
+            pageSize = result.PageSize,
+            reportMode = "moodle"
         });
     }
 
@@ -116,6 +139,50 @@ public class DashboardController : Controller
         
         return Json(columns);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> WordPressReport(
+        [FromQuery] string? preset,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        [FromQuery] long? categoryId,
+        [FromQuery] string? search,
+        [FromQuery] string? sortColumn,
+        [FromQuery] bool sortDesc,
+        [FromQuery] bool showOnlyFourthCompletion = false,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken cancellationToken = default)
+    {
+        // Only Charter Admins can access WordPress reports
+        if (!User.IsInRole(AppRoles.CharterAdmin))
+        {
+            return Forbid("Only Charter Admins are authorized to access WordPress reports.");
+        }
+
+        ComputeDateRange(preset, ref from, ref to);
+        var result = await _wordPressReportService.GetWordPressReportAsync(from, to, categoryId, search, sortColumn, sortDesc, page, pageSize, showOnlyFourthCompletion, cancellationToken);
+        return Json(new
+        {
+            items = result.Items,
+            totalCount = result.TotalCount,
+            page = result.Page,
+            pageSize = result.PageSize,
+            showOnlyFourthCompletion
+        });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> WordPressCategories(CancellationToken cancellationToken)
+    {
+        if (!User.IsInRole(AppRoles.CharterAdmin))
+        {
+            return Forbid("Only Charter Admins can access WordPress category information.");
+        }
+        var categories = await _wordPressReportService.GetWordPressCategoriesAsync(cancellationToken);
+        return Json(categories);
+    }
+
 
     private static void ComputeDateRange(string? preset, ref DateTime? from, ref DateTime? to)
     {

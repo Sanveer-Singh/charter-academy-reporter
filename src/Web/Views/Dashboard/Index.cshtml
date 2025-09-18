@@ -72,6 +72,26 @@
     #column-selection::-webkit-scrollbar-thumb:hover {
         background: #555;
     }
+    
+    /* WordPress toggle styling */
+    .form-check-input:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .form-switch .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .form-switch .form-check-input:focus {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%2813, 110, 253, 0.25%29'/%3e%3c/svg%3e");
+    }
+    
+    #fourth-completion-toggle {
+        transition: all 0.3s ease;
+    }
 </style>
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -177,7 +197,18 @@
 
 <div class="card mb-4">
     <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
-        <div class="h6 m-0">Moodle Student Completion Report</div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="h6 m-0" id="report-title">Moodle Student Completion Report</div>
+            @if (Model.ShowWordPressToggle)
+            {
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="wordpress-toggle" title="Toggle between Moodle and WordPress reports">
+                    <label class="form-check-label small text-muted" for="wordpress-toggle">
+                        WordPress Mode
+                    </label>
+                </div>
+            }
+        </div>
         <div class="d-flex gap-2 align-items-center w-100 w-md-auto">
             <input id="report-search" type="text" class="form-control" placeholder="Search name, email, course, category, PPRA, ID" />
             <select id="report-page-size" class="form-control" style="max-width: 120px;">
@@ -186,6 +217,15 @@
                 <option value="50">50</option>
                 <option value="100">100</option>
             </select>
+            @if (Model.ShowWordPressToggle)
+            {
+                <div class="form-check" id="fourth-completion-toggle" style="display: none;">
+                    <input class="form-check-input" type="checkbox" id="show-only-fourth" title="Show only 4th completion per user">
+                    <label class="form-check-label small text-nowrap" for="show-only-fourth">
+                        4th Only
+                    </label>
+                </div>
+            }
             <button id="report-search-btn" class="btn btn-outline-primary"><i class="fas fa-search"></i></button>
         </div>
     </div>
@@ -287,12 +327,15 @@
         const form = document.getElementById('filters');
         // Report UI elements (created below after markup is added)
         let reportSearchInput, reportSearchBtn, reportTbody, reportPager, reportCount, reportPageSizeSel, reportSortableHeaders;
+        let wordPressToggle, fourthCompletionToggle, showOnlyFourthCheckbox, reportTitle;
         // Report state
         let reportPage = 1;
         let reportPageSize = 25;
         let reportSortColumn = 'lastname';
         let reportSortDesc = false;
         let reportSearch = '';
+        let isWordPressMode = false;
+        let showOnlyFourthCompletion = false;
 
         function setCustomVisibility() {
             const custom = preset.value === 'custom';
@@ -416,6 +459,14 @@
             params.set('sortDesc', reportSortDesc ? 'true' : 'false');
             params.set('page', String(reportPage));
             params.set('pageSize', String(reportPageSize));
+            
+            // Add report mode parameter and WordPress-specific parameters
+            params.set('reportMode', isWordPressMode ? 'wordpress' : 'moodle');
+            if (isWordPressMode) {
+                params.set('showOnlyFourthCompletion', showOnlyFourthCompletion ? 'true' : 'false');
+            }
+            
+            // Always use the MoodleReport endpoint - it now handles both modes
             const res = await fetch(`/Dashboard/MoodleReport?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
             if (!res.ok) return;
             const data = await res.json();
@@ -479,6 +530,10 @@
             reportCount = document.getElementById('report-count');
             reportPageSizeSel = document.getElementById('report-page-size');
             reportSortableHeaders = Array.from(document.querySelectorAll('th[data-sort]'));
+            wordPressToggle = document.getElementById('wordpress-toggle');
+            fourthCompletionToggle = document.getElementById('fourth-completion-toggle');
+            showOnlyFourthCheckbox = document.getElementById('show-only-fourth');
+            reportTitle = document.getElementById('report-title');
 
             reportPageSizeSel.addEventListener('change', async () => {
                 const v = parseInt(reportPageSizeSel.value, 10);
@@ -514,6 +569,38 @@
                     await loadReport();
                 });
             });
+
+            // WordPress toggle functionality
+            if (wordPressToggle) {
+                wordPressToggle.addEventListener('change', async () => {
+                    isWordPressMode = wordPressToggle.checked;
+                    
+                    // Update report title
+                    if (reportTitle) {
+                        reportTitle.textContent = isWordPressMode ? 
+                            'WordPress Student Completion Report' : 
+                            'Moodle Student Completion Report';
+                    }
+                    
+                    // Show/hide WordPress-specific controls
+                    if (fourthCompletionToggle) {
+                        fourthCompletionToggle.style.display = isWordPressMode ? 'block' : 'none';
+                    }
+                    
+                    // Reset to first page and reload
+                    reportPage = 1;
+                    await loadReport();
+                });
+            }
+
+            // Fourth completion toggle (WordPress only)
+            if (showOnlyFourthCheckbox) {
+                showOnlyFourthCheckbox.addEventListener('change', async () => {
+                    showOnlyFourthCompletion = showOnlyFourthCheckbox.checked;
+                    reportPage = 1;
+                    await loadReport();
+                });
+            }
         }
 
         // Initialize report after DOM is ready
@@ -772,8 +859,15 @@
                         formData.append('search', reportSearch);
                     }
 
-                    // Make the export request
-                    const response = await fetch('/Export/ExcelMoodleReport', {
+                    // Make the export request to appropriate endpoint
+                    const exportEndpoint = isWordPressMode ? '/WordPressReport/ExportExcel' : '/Export/ExcelMoodleReport';
+                    
+                    // Add WordPress-specific parameters
+                    if (isWordPressMode) {
+                        formData.append('showOnlyFourthCompletion', showOnlyFourthCompletion ? 'true' : 'false');
+                    }
+                    
+                    const response = await fetch(exportEndpoint, {
                         method: 'POST',
                         body: formData
                     });
@@ -792,7 +886,7 @@
                     
                     // Extract filename from response headers if available
                     const contentDisposition = response.headers.get('Content-Disposition');
-                    let fileName = 'Moodle_Report.xlsx';
+                    let fileName = isWordPressMode ? 'WordPress_Report.xlsx' : 'Moodle_Report.xlsx';
                     if (contentDisposition) {
                         const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
                         if (fileNameMatch && fileNameMatch[1]) {

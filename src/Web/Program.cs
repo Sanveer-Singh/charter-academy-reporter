@@ -117,6 +117,7 @@ else
 }
 // Replace stub with MariaDB-backed service
 builder.Services.AddScoped<IDashboardService, MariaDbDashboardService>();
+builder.Services.AddScoped<IWordPressReportService, WordPressReportService>();
 builder.Services.Configure<ExportOptions>(builder.Configuration.GetSection("Export"));
 builder.Services.AddScoped<IExportSafetyService>(sp =>
 {

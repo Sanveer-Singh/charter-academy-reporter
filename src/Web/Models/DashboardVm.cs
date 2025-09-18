@@ -15,4 +15,5 @@ public class DashboardVm
 	public IReadOnlyList<CourseCategory>? Categories { get; set; }
 	public bool IsCharterAdmin { get; set; }
 	public bool CanExport { get; set; }
+	public bool ShowWordPressToggle { get; set; }
 }
