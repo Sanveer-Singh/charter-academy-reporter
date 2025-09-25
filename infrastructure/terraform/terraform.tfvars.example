@@ -1,0 +1,52 @@
+# Charter Reporter App - Terraform Configuration Example
+# Copy this file to terraform.tfvars and update with your actual values
+
+# AWS Configuration
+aws_region  = "af-south-1"
+environment = "prod"
+
+# Existing Infrastructure (REQUIRED - Update with your actual values)
+vpc_id                    = "vpc-1234567890abcdef0"    # Your existing VPC ID
+public_subnet_id          = "subnet-1234567890abcdef0" # Public subnet in your VPC
+mariadb_security_group_id = "sg-1234567890abcdef0"     # Security group for MariaDB
+
+# EC2 Configuration (minimal cost defaults)
+instance_type    = "t3.micro"  # start small; scale via Terraform
+ebs_volume_size  = 20          # GB (min allowed per validation)
+key_pair_name    = ""          # Optional: EC2 key pair for emergency access
+
+# Domain and DNS
+domain_name          = "reporter.charteracademy.co.za"  # Your domain
+create_route53_zone  = false                            # Set to true if you want Terraform to manage DNS
+admin_email          = "admin@charteracademy.co.za"     # For SSL certificates and notifications
+alert_email          = "alerts@charteracademy.co.za"    # For CloudWatch alarms
+
+# Database Configuration (Update with your actual values)
+mariadb_moodle_host         = "charteracademy-moolrn.cbasq8maywa1.af-south-1.rds.amazonaws.com"
+mariadb_moodle_database     = "charteracademy_moolrn"
+mariadb_moodle_username     = "readonly_user"
+mariadb_moodle_table_prefix = "moow_"
+
+mariadb_woo_host         = "charteracademy-moolrn.cbasq8maywa1.af-south-1.rds.amazonaws.com"
+mariadb_woo_database     = "charteracademy_wp001"
+mariadb_woo_username     = "readonly_user"
+mariadb_woo_table_prefix = "wpbh_"
+
+# Secrets (REQUIRED - Set actual passwords)
+mariadb_moodle_password = "your_actual_moodle_readonly_password"
+mariadb_woo_password    = "your_actual_woo_readonly_password"
+
+# Email Configuration (Optional - for SMTP notifications)
+smtp_host     = ""    # e.g., "smtp.gmail.com" or leave empty to use DevNoopEmailSender
+smtp_username = ""    # SMTP username
+smtp_password = ""    # SMTP password
+smtp_port     = 587   # SMTP port
+
+# Backup and Logging
+backup_retention_days = 30
+log_retention_days    = 30
+
+
+
+
+

@@ -1,0 +1,12 @@
+---
+name: Test Templates
+appliesTo:
+  - "**/Tests/**/*.cs"
+triggers:
+  keywords: ["unit test", "integration test", "xunit", "FluentAssertions"]
+order: 95
+---
+# TEST TEMPLATES (Index)
+
+Use concrete patterns from @Rules/Templates/test-templates.md. Focus tests on auth, queries, export redaction.
+

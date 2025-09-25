@@ -1,0 +1,167 @@
+@model Charter.Reporter.Web.Controllers.AccountController.LoginVm
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4 login-card">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-sign-in-alt mr-2" aria-hidden="true"></i>
+                    Login to Charter Reporter
+                </h6>
+            </div>
+            <div class="card-body">
+                @if (!ViewData.ModelState.IsValid || ViewBag.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-exclamation-triangle mr-2 mt-1" aria-hidden="true"></i>
+                            <div>
+                                @if (ViewBag.ErrorMessage != null)
+                                {
+                                    <strong>@ViewBag.ErrorMessage</strong>
+                                }
+                                else
+                                {
+                                    <strong>Please fix the following issues:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                        {
+                                            <li>@error.ErrorMessage</li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        </div>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                }
+                
+                <form asp-action="Login" method="post" id="loginForm" class="login-form" novalidate>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    
+                    <div class="form-group">
+                        <label asp-for="Email" class="form-label">
+                            <i class="fas fa-envelope mr-1" aria-hidden="true"></i>
+                            Email Address
+                        </label>
+                        <input asp-for="Email" 
+                               class="form-control @(ViewData.ModelState["Email"]?.Errors.Any() == true ? "is-invalid" : "")" 
+                               aria-required="true" 
+                               aria-describedby="email-help"
+                               placeholder="Enter your email address"
+                               autocomplete="email" />
+                        <span asp-validation-for="Email" class="invalid-feedback d-block"></span>
+                        <small id="email-help" class="form-text text-muted">
+                            We'll never share your email with anyone else.
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label asp-for="Password" class="form-label">
+                            <i class="fas fa-lock mr-1" aria-hidden="true"></i>
+                            Password
+                        </label>
+                        <input asp-for="Password" 
+                               class="form-control @(ViewData.ModelState["Password"]?.Errors.Any() == true ? "is-invalid" : "")" 
+                               aria-required="true"
+                               placeholder="Enter your password"
+                               autocomplete="current-password" />
+                        <span asp-validation-for="Password" class="invalid-feedback d-block"></span>
+                    </div>
+                    
+                    <div class="form-group form-check">
+                        <input asp-for="RememberMe" class="form-check-input" id="rememberMe" />
+                        <label asp-for="RememberMe" class="form-check-label" for="rememberMe">
+                            <i class="fas fa-check-square mr-1" aria-hidden="true"></i>
+                            Keep me signed in for 30 days
+                        </label>
+                    </div>
+                    
+                    <div class="form-group mb-4">
+                        <button type="submit" class="btn btn-primary btn-block" id="loginButton">
+                            <span class="button-text">
+                                <i class="fas fa-sign-in-alt mr-2" aria-hidden="true"></i>
+                                Sign In
+                            </span>
+                            <span class="button-loading d-none">
+                                <i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i>
+                                Signing In...
+                            </span>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="d-flex flex-column flex-sm-row justify-content-center align-items-center">
+                            <a class="btn btn-link" asp-controller="Account" asp-action="ForgotPassword">
+                                <i class="fas fa-key mr-1" aria-hidden="true"></i>
+                                Forgot Password?
+                            </a>
+                            <span class="mx-2 d-none d-sm-inline">|</span>
+                            <a class="btn btn-link" asp-controller="Account" asp-action="Register">
+                                <i class="fas fa-user-plus mr-1" aria-hidden="true"></i>
+                                Register New Account
+                            </a>
+                        </div>
+                        <small class="text-muted mt-2">
+                            Need help? Contact us at 
+                            <a href="mailto:support@charter.co.za" class="text-decoration-none">support@charter.co.za</a>
+                        </small>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('loginForm');
+            const button = document.getElementById('loginButton');
+            const buttonText = button.querySelector('.button-text');
+            const buttonLoading = button.querySelector('.button-loading');
+            
+            form.addEventListener('submit', function(e) {
+                // Allow the form to submit first, then show loading state after a brief delay
+                setTimeout(function() {
+                    // Show loading state
+                    button.disabled = true;
+                    buttonText.classList.add('d-none');
+                    buttonLoading.classList.remove('d-none');
+                    
+                    // Disable form inputs (but don't disable the submit button since form is already submitting)
+                    const inputs = form.querySelectorAll('input:not([type="submit"])');
+                    inputs.forEach(input => input.disabled = true);
+                }, 100); // Small delay to allow form submission to start
+                
+                // Re-enable after timeout in case of server error
+                setTimeout(function() {
+                    if (button.disabled) {
+                        button.disabled = false;
+                        buttonText.classList.remove('d-none');
+                        buttonLoading.classList.add('d-none');
+                        const inputs = form.querySelectorAll('input');
+                        inputs.forEach(input => input.disabled = false);
+                    }
+                }, 10000); // 10 second timeout
+            });
+            
+            // Focus management for accessibility
+            const firstErrorField = form.querySelector('.is-invalid');
+            if (firstErrorField) {
+                firstErrorField.focus();
+            }
+        });
+    </script>
+    
+
+}
+
+

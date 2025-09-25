@@ -1,0 +1,12 @@
+---
+name: View Templates
+appliesTo:
+  - "**/Views/**/*.cshtml"
+triggers:
+  keywords: ["scaffold view", "create view", "razor template", "sb-admin-2"]
+order: 93
+---
+# VIEW TEMPLATES (Index)
+
+Use concrete patterns from @Rules/Templates/view-templates.md. Prefer SB Admin 2 components/utilities.
+

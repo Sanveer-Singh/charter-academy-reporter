@@ -1,0 +1,226 @@
+# Charter Reporter App - GitHub Actions Deployment Workflow
+# Place this file in .github/workflows/ in your repository
+
+name: Deploy Charter Reporter
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - staging
+  push:
+    branches: 
+      - main
+      - master
+
+env:
+  AWS_REGION: af-south-1
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve infrastructure values (from SSM)
+        id: infra
+        run: |
+          # Read S3 bucket from Parameter Store
+          S3_BUCKET=$(aws ssm get-parameter --name "/charter-reporter/deployment/artifacts_bucket" --region $AWS_REGION --query 'Parameter.Value' --output text)
+          echo "s3_bucket=$S3_BUCKET" >> $GITHUB_OUTPUT
+
+          # Discover instance via tag (fallback if Terraform outputs unavailable)
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --region $AWS_REGION \
+            --filters Name=tag:Project,Values=Charter-Reporter Name=instance-state-name,Values=running \
+            --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+
+          # Domain name from Parameter Store
+          DOMAIN_NAME=$(aws ssm get-parameter --name "/charter-reporter/app/domain" --region $AWS_REGION --query 'Parameter.Value' --output text)
+          echo "domain_name=$DOMAIN_NAME" >> $GITHUB_OUTPUT
+
+      - name: Restore dependencies
+        run: dotnet restore Charter.Reporter.sln
+
+      - name: Build solution
+        run: dotnet build Charter.Reporter.sln -c Release --no-restore
+
+      - name: Run tests
+        run: dotnet test Charter.Reporter.sln -c Release --no-build --verbosity normal
+
+      - name: Publish application
+        run: |
+          dotnet publish ./src/Web/Charter.Reporter.Web.csproj \
+            -c Release \
+            -o ./publish \
+            --no-build \
+            --verbosity minimal
+
+      - name: Create deployment package
+        run: |
+          cd ./publish
+          zip -r ../charter-reporter-${{ github.sha }}.zip .
+          cd ..
+          echo "Package size: $(du -h charter-reporter-${{ github.sha }}.zip)"
+
+      - name: Upload artifact to S3
+        run: |
+          aws s3 cp charter-reporter-${{ github.sha }}.zip \
+            s3://${{ steps.infra.outputs.s3_bucket }}/charter-reporter-${{ github.sha }}.zip \
+            --region ${{ env.AWS_REGION }}
+          
+          echo "Artifact uploaded: s3://${{ steps.infra.outputs.s3_bucket }}/charter-reporter-${{ github.sha }}.zip"
+
+      - name: Deploy to EC2
+        id: deploy
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "${{ steps.infra.outputs.instance_id }}" \
+            --document-name "AWS-RunShellScript" \
+            --parameters commands="[\"sudo /usr/local/bin/deploy-charter-reporter.sh s3://${{ steps.infra.outputs.s3_bucket }}/charter-reporter-${{ github.sha }}.zip\"]" \
+            --comment "Charter Reporter deploy ${{ github.sha }}" \
+            --region ${{ env.AWS_REGION }} \
+            --query 'Command.CommandId' \
+            --output text)
+          
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+          echo "Deployment command ID: $COMMAND_ID"
+
+      - name: Wait for deployment
+        run: |
+          echo "Waiting for deployment to complete..."
+          aws ssm wait command-executed \
+            --command-id ${{ steps.deploy.outputs.command_id }} \
+            --instance-id ${{ steps.infra.outputs.instance_id }} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Check deployment result
+        run: |
+          RESULT=$(aws ssm get-command-invocation \
+            --command-id ${{ steps.deploy.outputs.command_id }} \
+            --instance-id ${{ steps.infra.outputs.instance_id }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'Status' \
+            --output text)
+          
+          echo "Deployment status: $RESULT"
+          
+          if [ "$RESULT" = "Success" ]; then
+            echo "✅ Deployment completed successfully"
+            echo "🌐 Application available at: https://${{ steps.infra.outputs.domain_name }}"
+          else
+            echo "❌ Deployment failed"
+            # Get error details
+            aws ssm get-command-invocation \
+              --command-id ${{ steps.deploy.outputs.command_id }} \
+              --instance-id ${{ steps.infra.outputs.instance_id }} \
+              --region ${{ env.AWS_REGION }} \
+              --query 'StandardErrorContent' \
+              --output text
+            exit 1
+          fi
+
+      - name: Post-deployment validation
+        run: |
+          # Wait for app to be ready
+          sleep 30
+          
+          # Basic health check via CloudWatch if possible
+          echo "Checking application health..."
+          
+          # Test HTTPS endpoint (if SSL is configured)
+          if curl -f -s https://${{ steps.infra.outputs.domain_name }}/health; then
+            echo "✅ Health endpoint responding"
+          else
+            echo "⚠️ Health endpoint not responding (may be normal if SSL not configured)"
+          fi
+
+      - name: Cleanup artifacts
+        if: always()
+        run: |
+          # Remove local build artifacts
+          rm -f charter-reporter-${{ github.sha }}.zip
+          
+          # Keep only last 10 artifacts in S3 to manage costs
+          aws s3 ls s3://${{ steps.infra.outputs.s3_bucket }}/ \
+            --region ${{ env.AWS_REGION }} \
+            | sort -k1,2 \
+            | head -n -10 \
+            | awk '{print $4}' \
+            | xargs -I {} aws s3 rm s3://${{ steps.infra.outputs.s3_bucket }}/{} --region ${{ env.AWS_REGION }} || true
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "🎉 Charter Reporter deployed successfully to https://${{ steps.infra.outputs.domain_name }}"
+          else
+            echo "💥 Charter Reporter deployment failed. Check logs for details."
+          fi
+
+# Separate job for infrastructure provisioning (manual trigger only)
+  provision-infrastructure:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.provision == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.6"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        working-directory: ./infrastructure/terraform
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: ./infrastructure/terraform
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: ./infrastructure/terraform
+        run: terraform apply -auto-approve tfplan
+
+      - name: Output infrastructure details
+        working-directory: ./infrastructure/terraform
+        run: |
+          echo "🏗️ Infrastructure provisioned successfully!"
+          echo ""
+          terraform output deployment_info
+
+
+
+
+

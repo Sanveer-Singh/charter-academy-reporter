@@ -1,0 +1,12 @@
+---
+name: Repository Templates
+appliesTo:
+  - "**/Data/Repositories/**/*.cs"
+triggers:
+  keywords: ["scaffold repository", "create repository", "IQueryable"]
+order: 92
+---
+# REPOSITORY TEMPLATES (Index)
+
+Use concrete patterns from @Rules/Templates/repository-templates.md. Keep queries composable; avoid materialization.
+

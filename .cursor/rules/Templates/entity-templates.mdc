@@ -1,0 +1,12 @@
+---
+name: Entity Templates
+appliesTo:
+  - "**/Data/Entities/**/*.cs"
+triggers:
+  keywords: ["scaffold entity", "create entity", "data annotations"]
+order: 94
+---
+# ENTITY TEMPLATES (Index)
+
+Use concrete patterns from @Rules/Templates/entity-templates.md. Keep audit fields consistent.
+

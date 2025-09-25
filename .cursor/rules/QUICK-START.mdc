@@ -1,0 +1,160 @@
+# CHARTER REPORTER - CURSOR RULES QUICK START
+
+## 🚀 HOW TO USE THESE RULES
+
+### 1. Copy Master Rules to Your Project
+```bash
+# Copy the master cursor rules file to your project root
+cp charter-reporter-web/Rules/MASTER-CURSORRULES.md .cursorrules
+```
+
+### 2. Workflow Selection
+
+#### For Bug Fixes:
+1. Open `Workflows/bug-fix-workflow.md`
+2. Update workflow state at top
+3. Follow the 5-phase process
+4. Use minimal context loading
+
+#### For New Features:
+1. Open `Workflows/feature-development-workflow.md`  
+2. Copy user story to workflow state
+3. Follow implementation order diagram
+4. Use provided templates
+
+#### For Full Project:
+1. Open `Workflows/full-project-implementation-workflow.md`
+2. Check current module status
+3. Follow weekly implementation plan
+
+### 3. Context-Specific Rules
+
+When working in specific areas, reference:
+- **Controllers**: `Context/controller-rules.md`
+- **Services**: `Context/service-rules.md`
+- **Repositories**: `Context/repository-rules.md`
+- **Views**: `Context/view-rules.md`
+
+### 4. Code Templates
+
+Instead of writing from scratch, use templates:
+- **Entities**: `Templates/entity-templates.md`
+- **Services**: `Templates/service-templates.md`
+- **Controllers**: `Templates/controller-templates.md`
+- **Views**: `Templates/view-templates.md`
+- **Tests**: `Templates/test-templates.md`
+
+### 5. Reference-First Rule (avoid duplication drift)
+- Prefer referencing master patterns over pasting code blocks
+- USE: `@Rules/MASTER-CURSORRULES.md → T1/T2`
+- FOLLOW: `@Rules/Templates/*` for concrete skeletons
+- TEST-AGAINST: `@Tests/{Area}/*` or `Templates/test-templates.md`
+
+## 📋 TYPICAL WORKFLOW EXAMPLE
+
+### Task: "Add user activity logging"
+
+1. **Update Master Cursor Rules State**:
+```yaml
+## WORKFLOW STATE
+<!-- Current Task: Add user activity logging -->
+<!-- Phase: PLANNING -->
+<!-- Context Files Loaded: [] -->
+<!-- Completed: [] -->
+```
+
+2. **Load Relevant Context** (from Section 3):
+```yaml
+LOAD:
+  - @Services/AuditService.cs
+  - @Data/Entities/AuditLog.cs
+  - @Controllers/BaseController.cs
+```
+
+3. **Find Similar Patterns** (from Section 9):
+```yaml
+CHECK:
+  - How AuditService logs actions
+  - BaseController helper methods
+  - Existing audit log structure
+```
+
+4. **Apply Templates**:
+- Use T1 Service Method Pattern
+- Follow existing AuditService patterns
+- Maintain Result<T> return types
+
+5. **Update State After Completion**:
+```yaml
+<!-- Completed: [AuditLog entity extended, Activity logging service method, BaseController integration] -->
+```
+
+## ⚡ KEY PRINCIPLES APPLIED
+
+### 1. Deterministic Output
+- Concrete code examples, not abstract descriptions
+- Exact file paths, not general locations
+- Specific patterns to copy, not principles to interpret
+
+### 2. Token Efficiency  
+- Lazy loading - only load what's needed
+- Reference existing patterns instead of recreating
+- Use template shortcuts (T1, T2, etc.)
+
+### 3. State Management
+- Workflow state tracks progress
+- Context files explicitly listed
+- Completed items documented
+
+### 4. Conflict Resolution
+- Clear priority hierarchy
+- Concrete examples of resolution
+- No ambiguity in decisions
+
+## 🎯 BEST PRACTICES
+
+### DO:
+✅ Update workflow state frequently  
+✅ Use existing patterns from codebase
+✅ Load minimal context for task
+✅ Follow template structures exactly
+✅ Check for reusable components first
+
+### DON'T:
+❌ Load entire file contents unnecessarily
+❌ Create new patterns if existing ones work
+❌ Skip workflow state updates
+❌ Ignore role-based access rules
+❌ Hardcode values covered by constants
+
+## 🔍 TROUBLESHOOTING
+
+### "I don't know where to start"
+1. Check Section 9 Quick Reference
+2. Find similar existing implementation
+3. Copy and modify the pattern
+
+### "Too many files to consider"
+1. Use Section 3 Context Loading Rules
+2. Load only files mentioned for your task type
+3. Expand only if needed
+
+### "Conflicting requirements"
+1. Check Section 4 Hierarchy
+2. Higher priority wins
+3. Document decision in workflow state
+
+### "Not sure which template"
+1. Check template file descriptions
+2. Match your task to template type
+3. Use closest match and adapt
+
+## 📚 ADDITIONAL RESOURCES
+
+- **State Management**: `State/workflow-state.md`
+- **Reference Patterns**: `State/reference-patterns.md`  
+- **Base Rules**: `Base/.cursorrules`
+
+---
+
+**Remember**: These rules transform LLMs from guessing to pattern-matching. Always provide concrete examples over abstract principles!

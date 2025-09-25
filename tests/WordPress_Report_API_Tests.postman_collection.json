@@ -1,0 +1,645 @@
+{
+	"info": {
+		"_postman_id": "wordpress-report-api-tests",
+		"name": "WordPress Report API Tests",
+		"description": "Comprehensive test suite for WordPress Report API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{auth_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://localhost:7001",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "your_jwt_token_here",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login - Get Auth Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.token) {",
+									"        pm.collectionVariables.set('auth_token', response.token);",
+									"        pm.test('Login successful - token received', function () {",
+									"            pm.expect(response.token).to.be.a('string');",
+									"        });",
+									"    }",
+									"} else {",
+									"    pm.test('Login failed', function () {",
+									"        pm.expect.fail('Login request failed with status: ' + pm.response.code);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@charter.co.za\",\n    \"password\": \"AdminPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/Account/Login",
+							"host": ["{{base_url}}"],
+							"path": ["Account", "Login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "WordPress Report Tests",
+			"item": [
+				{
+					"name": "1. Get Report - Basic Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has required structure', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('items');",
+									"    pm.expect(response).to.have.property('totalCount');",
+									"    pm.expect(response).to.have.property('page');",
+									"    pm.expect(response).to.have.property('pageSize');",
+									"});",
+									"",
+									"pm.test('Items have required fields', function () {",
+									"    const response = pm.response.json();",
+									"    if (response.items && response.items.length > 0) {",
+									"        const item = response.items[0];",
+									"        pm.expect(item).to.have.property('userId');",
+									"        pm.expect(item).to.have.property('firstName');",
+									"        pm.expect(item).to.have.property('lastName');",
+									"        pm.expect(item).to.have.property('email');",
+									"        pm.expect(item).to.have.property('ppraNo');",
+									"        pm.expect(item).to.have.property('idNo');",
+									"        pm.expect(item).to.have.property('province');",
+									"        pm.expect(item).to.have.property('agency');",
+									"        pm.expect(item).to.have.property('courseName');",
+									"        pm.expect(item).to.have.property('category');",
+									"        pm.expect(item).to.have.property('enrolmentDate');",
+									"        pm.expect(item).to.have.property('completionDate');",
+									"        pm.expect(item).to.have.property('fourthCompletionDate');",
+									"    }",
+									"});",
+									"",
+									"pm.test('Response time is acceptable', function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetReport",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetReport"]
+						}
+					}
+				},
+				{
+					"name": "2. Get Report - With Pagination",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Pagination works correctly', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.page).to.equal(2);",
+									"    pm.expect(response.pageSize).to.equal(10);",
+									"    pm.expect(response.items.length).to.be.at.most(10);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetReport?page=2&pageSize=10",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetReport"],
+							"query": [
+								{
+									"key": "page",
+									"value": "2"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "3. Get Report - With Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Search functionality works', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('items');",
+									"    // If results exist, they should contain the search term",
+									"    if (response.items.length > 0) {",
+									"        const searchTerm = 'John';",
+									"        const hasSearchTerm = response.items.some(item => ",
+									"            item.firstName.includes(searchTerm) || ",
+									"            item.lastName.includes(searchTerm) ||",
+									"            item.email.includes(searchTerm)",
+									"        );",
+									"        pm.expect(hasSearchTerm).to.be.true;",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetReport?search=John",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetReport"],
+							"query": [
+								{
+									"key": "search",
+									"value": "John"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "4. Get Report - With Sorting",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Sorting works correctly', function () {",
+									"    const response = pm.response.json();",
+									"    if (response.items.length > 1) {",
+									"        // Check if results are sorted by lastName descending",
+									"        const lastNames = response.items.map(item => item.lastName);",
+									"        const sortedLastNames = [...lastNames].sort().reverse();",
+									"        pm.expect(lastNames).to.deep.equal(sortedLastNames);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetReport?sortColumn=lastname&sortDesc=true",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetReport"],
+							"query": [
+								{
+									"key": "sortColumn",
+									"value": "lastname"
+								},
+								{
+									"key": "sortDesc",
+									"value": "true"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "5. Get Report - Date Filtering",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Date filtering works', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('items');",
+									"    // Results should only include completions in 2024",
+									"    if (response.items.length > 0) {",
+									"        response.items.forEach(item => {",
+									"            const completionDate = new Date(item.fourthCompletionDate);",
+									"            pm.expect(completionDate.getFullYear()).to.equal(2024);",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetReport?from=2024-01-01T00:00:00Z&to=2024-12-31T23:59:59Z",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetReport"],
+							"query": [
+								{
+									"key": "from",
+									"value": "2024-01-01T00:00:00Z"
+								},
+								{
+									"key": "to",
+									"value": "2024-12-31T23:59:59Z"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "6. Get Report - Only Fourth Completion",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Show only fourth completion flag works', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.showOnlyFourthCompletion).to.be.true;",
+									"    // Each user should only appear once (4th completion only)",
+									"    if (response.items.length > 0) {",
+									"        const userIds = response.items.map(item => item.userId);",
+									"        const uniqueUserIds = [...new Set(userIds)];",
+									"        pm.expect(userIds.length).to.equal(uniqueUserIds.length);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetReport?showOnlyFourthCompletion=true",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetReport"],
+							"query": [
+								{
+									"key": "showOnlyFourthCompletion",
+									"value": "true"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "7. Get Categories",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Categories response structure is correct', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an('array');",
+									"    if (response.length > 0) {",
+									"        const category = response[0];",
+									"        pm.expect(category).to.have.property('id');",
+									"        pm.expect(category).to.have.property('name');",
+									"        pm.expect(category.id).to.be.a('number');",
+									"        pm.expect(category.name).to.be.a('string');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetCategories",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetCategories"]
+						}
+					}
+				},
+				{
+					"name": "8. Get Available Columns",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Columns response structure is correct', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an('array');",
+									"    pm.expect(response.length).to.be.at.least(10);",
+									"    ",
+									"    const column = response[0];",
+									"    pm.expect(column).to.have.property('value');",
+									"    pm.expect(column).to.have.property('label');",
+									"});",
+									"",
+									"pm.test('Required columns are present', function () {",
+									"    const response = pm.response.json();",
+									"    const columnValues = response.map(col => col.value);",
+									"    ",
+									"    const requiredColumns = ['LastName', 'FirstName', 'Email', 'PpraNo', 'IdNo', 'Province', 'Agency', 'CourseName'];",
+									"    requiredColumns.forEach(required => {",
+									"        pm.expect(columnValues).to.include(required);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetAvailableColumns",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetAvailableColumns"]
+						}
+					}
+				},
+				{
+					"name": "9. Excel Export Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is Excel file', function () {",
+									"    const contentType = pm.response.headers.get('Content-Type');",
+									"    pm.expect(contentType).to.include('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');",
+									"});",
+									"",
+									"pm.test('Content-Disposition header is set', function () {",
+									"    const disposition = pm.response.headers.get('Content-Disposition');",
+									"    pm.expect(disposition).to.include('attachment');",
+									"    pm.expect(disposition).to.include('filename');",
+									"    pm.expect(disposition).to.include('.xlsx');",
+									"});",
+									"",
+									"pm.test('File size is reasonable', function () {",
+									"    const responseSize = pm.response.responseSize;",
+									"    pm.expect(responseSize).to.be.above(1000); // At least 1KB",
+									"    pm.expect(responseSize).to.be.below(50000000); // Less than 50MB",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "selectedColumns",
+									"value": "LastName",
+									"type": "text"
+								},
+								{
+									"key": "selectedColumns",
+									"value": "FirstName",
+									"type": "text"
+								},
+								{
+									"key": "selectedColumns",
+									"value": "Email",
+									"type": "text"
+								},
+								{
+									"key": "selectedColumns",
+									"value": "PpraNo",
+									"type": "text"
+								},
+								{
+									"key": "selectedColumns",
+									"value": "Province",
+									"type": "text"
+								},
+								{
+									"key": "fromUtc",
+									"value": "2024-01-01",
+									"type": "text"
+								},
+								{
+									"key": "toUtc",
+									"value": "2024-12-31",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/ExportExcel",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "ExportExcel"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Error Handling Tests",
+			"item": [
+				{
+					"name": "Unauthorized Access Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 401 or 403 (Unauthorized/Forbidden)', function () {",
+									"    pm.expect([401, 403]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetReport",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetReport"]
+						}
+					}
+				},
+				{
+					"name": "Invalid Sort Column Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Invalid sort column handled gracefully', function () {",
+									"    // Should either return 200 with default sorting or 400 bad request",
+									"    pm.expect([200, 400]).to.include(pm.response.code);",
+									"    ",
+									"    if (pm.response.code === 200) {",
+									"        const response = pm.response.json();",
+									"        pm.expect(response).to.have.property('items');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetReport?sortColumn=invalid_column",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetReport"],
+							"query": [
+								{
+									"key": "sortColumn",
+									"value": "invalid_column"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Invalid Date Format Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Invalid date format handled gracefully', function () {",
+									"    pm.expect([200, 400]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/WordPressReport/GetReport?from=invalid-date&to=also-invalid",
+							"host": ["{{base_url}}"],
+							"path": ["WordPressReport", "GetReport"],
+							"query": [
+								{
+									"key": "from",
+									"value": "invalid-date"
+								},
+								{
+									"key": "to",
+									"value": "also-invalid"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,972 @@
+@model Charter.Reporter.Web.Models.DashboardVm
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* Export Modal UX Improvements */
+    #exportModal .modal-dialog {
+        max-width: 90vw;
+    }
+    
+    @@media (max-width: 768px) {
+        #exportModal .modal-dialog {
+            margin: 0.5rem;
+            max-width: calc(100vw - 1rem);
+        }
+        
+        #exportModal .modal-body {
+            padding: 1rem;
+        }
+        
+        #exportModal .col-md-6 {
+            margin-bottom: 0.5rem;
+        }
+        
+        #column-selection {
+            max-height: 300px !important;
+        }
+    }
+    
+    /* Improve checkbox visibility */
+    .form-check-input {
+        width: 1.25em;
+        height: 1.25em;
+        margin-top: 0.125em;
+        cursor: pointer;
+    }
+    
+    .form-check-label {
+        margin-left: 0.25rem;
+        user-select: none;
+    }
+    
+    /* Focus states for accessibility */
+    .btn:focus,
+    .btn-close:focus,
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    /* Smooth transitions */
+    .modal.fade .modal-dialog {
+        transition: transform 0.3s ease-out;
+    }
+    
+    /* Better scrollbar for column selection */
+    #column-selection::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #column-selection::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    #column-selection::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    #column-selection::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    
+    /* WordPress toggle styling */
+    .form-check-input:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .form-switch .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .form-switch .form-check-input:focus {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%2813, 110, 253, 0.25%29'/%3e%3c/svg%3e");
+    }
+    
+    #fourth-completion-toggle {
+        transition: all 0.3s ease;
+    }
+</style>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+    @if (Model.CanExport)
+    {
+        <button id="export-excel-btn" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm"><i class="fas fa-file-excel fa-sm text-white-50"></i> Export to Excel</button>
+    }
+ </div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form id="filters" class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+                <label for="preset" class="form-label">Date range</label>
+                <select id="preset" name="preset" class="form-control">
+                    <option value="last-month">Last month</option>
+                    <option value="last-3-months" selected>Last 3 months</option>
+                    <option value="last-6-months">Last 6 months</option>
+                    <option value="1-year">1 year</option>
+                    <option value="all-time">All time</option>
+                    <option value="custom">Custom…</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label for="from" class="form-label">From</label>
+                <input id="from" name="from" type="date" class="form-control" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label for="to" class="form-label">To</label>
+                <input id="to" name="to" type="date" class="form-control" />
+            </div>
+            @if (Model.IsCharterAdmin)
+            {
+                <div class="col-12 col-md-3">
+                    <label for="categoryId" class="form-label">Course category</label>
+                    <select id="categoryId" name="categoryId" class="form-control">
+                        <option value="">All categories</option>
+                        @if (Model.Categories != null)
+                        {
+                            foreach (var c in Model.Categories)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+            }
+            <div class="col-12 col-md-2 mt-3 mt-md-0">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter"></i> Apply</button>
+            </div>
+        </form>
+    </div>
+ </div>
+
+<div class="row">
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Sales</div>
+                        <div id="kpi-sales" class="h5 mb-0 font-weight-bold text-gray-800">@Model.SalesTotal.ToString("C")</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Enrollments</div>
+                        <div id="kpi-enroll" class="h5 mb-0 font-weight-bold text-gray-800">@Model.EnrollmentCount</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Completions</div>
+                        <div id="kpi-complete" class="h5 mb-0 font-weight-bold text-gray-800">@Model.CompletionCount</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-3">
+            <div class="h6 m-0" id="report-title">Student Completion Report</div>
+            @if (Model.ShowWordPressToggle)
+            {
+                <div class="d-flex align-items-center gap-2">
+                    <label for="report-mode-select" class="form-label small text-muted mb-0">Data Source:</label>
+                    <select id="report-mode-select" class="form-select form-select-sm" style="min-width: 120px;">
+                        <option value="moodle" selected>Moodle</option>
+                        <option value="wordpress">WordPress</option>
+                        <option value="both">Both (Merged)</option>
+                    </select>
+                </div>
+            }
+        </div>
+        <div class="d-flex gap-2 align-items-center w-100 w-md-auto">
+            <input id="report-search" type="text" class="form-control" placeholder="Search name, email, course, category, PPRA, ID" />
+            <select id="report-page-size" class="form-control" style="max-width: 120px;">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+            <div class="form-check" id="per-user-toggle">
+                <input class="form-check-input" type="checkbox" id="per-user" title="Show one record per user (4th completion date where applicable)">
+                <label class="form-check-label small text-nowrap" for="per-user">
+                    Per User
+                </label>
+            </div>
+            <button id="report-search-btn" class="btn btn-outline-primary"><i class="fas fa-search"></i></button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 60vh; overflow:auto;">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light" style="position: sticky; top: 0; z-index: 1;">
+                    <tr>
+                        <th scope="col" data-sort="lastname">Last Name</th>
+                        <th scope="col" data-sort="firstname">First Name</th>
+                        <th scope="col" data-sort="email">Email</th>
+                        <th scope="col" data-sort="phonenumber">Phone Number</th>
+                        <th scope="col" data-sort="ppraNo">PPRA no</th>
+                        <th scope="col" data-sort="idNo">ID no</th>
+                        <th scope="col" data-sort="province">Province</th>
+                        <th scope="col" data-sort="agency">Agency</th>
+                        <th scope="col" data-sort="courseName">Course Name</th>
+                        <th scope="col" data-sort="category">Category</th>
+                        <th scope="col" data-sort="enrolmentDate">Enrolment Date</th>
+                        <th scope="col" data-sort="completionDate">Completion Date</th>
+                        <th scope="col" data-sort="fourthCompletionDate">4th Completion Date</th>
+                    </tr>
+                </thead>
+                <tbody id="report-tbody">
+                    <tr><td colspan="13" class="text-center p-4 text-muted">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+        <div id="report-count" class="text-muted">0 records</div>
+        <nav>
+            <ul id="report-pager" class="pagination mb-0"></ul>
+        </nav>
+    </div>
+</div>
+
+@if (Model.CanExport)
+{
+    <!-- Export to Excel Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-light border-bottom">
+                    <h5 class="modal-title d-flex align-items-center" id="exportModalLabel">
+                        <i class="fas fa-file-excel text-success me-2"></i>
+                        <span>Export to Excel</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" title="Close (ESC)"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span>Select the columns you want to include in your Excel export. All columns are selected by default.</span>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Available Columns</h6>
+                        <span id="selection-count" class="badge bg-primary">0 selected</span>
+                    </div>
+                    
+                    <div id="column-selection" class="row g-2" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Column checkboxes will be populated here -->
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="btn-group" role="group" aria-label="Selection controls">
+                            <button id="select-all-columns" class="btn btn-outline-primary btn-sm" title="Select all columns">
+                                <i class="fas fa-check-square me-1"></i>Select All
+                            </button>
+                            <button id="deselect-all-columns" class="btn btn-outline-secondary btn-sm" title="Deselect all columns">
+                                <i class="far fa-square me-1"></i>Deselect All
+                            </button>
+                        </div>
+                        <small class="text-muted">Press ESC to cancel</small>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button id="confirm-export" type="button" class="btn btn-success">
+                        <i class="fas fa-download me-1"></i>Export Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    (function() {
+        const preset = document.getElementById('preset');
+        const from = document.getElementById('from');
+        const to = document.getElementById('to');
+        const form = document.getElementById('filters');
+        // Report UI elements (created below after markup is added)
+        let reportSearchInput, reportSearchBtn, reportTbody, reportPager, reportCount, reportPageSizeSel, reportSortableHeaders;
+        let reportModeSelect, reportTitle, perUserToggle, perUserCheckbox;
+        // Report state
+        let reportPage = 1;
+        let reportPageSize = 25;
+        let reportSortColumn = 'lastname';
+        let reportSortDesc = false;
+        let reportSearch = '';
+        let reportMode = 'moodle'; // 'moodle', 'wordpress', 'both'
+        let perUser = false;
+
+        function setCustomVisibility() {
+            const custom = preset.value === 'custom';
+            from.disabled = !custom;
+            to.disabled = !custom;
+            if (!custom) {
+                // For presets, show the computed range in the inputs for clarity
+                const range = computePresetRange(preset.value);
+                if (range) {
+                    from.value = range.from ?? '';
+                    to.value = range.to ?? '';
+                } else {
+                    from.value = '';
+                    to.value = '';
+                }
+            }
+        }
+
+        function pad(n) { return n < 10 ? '0' + n : '' + n; }
+        function fmt(d) { return d ? `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}` : ''; }
+        function startOfMonth(d) {
+            return new Date(d.getFullYear(), d.getMonth(), 1);
+        }
+        function endOfMonth(d) {
+            return new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        }
+        function computePresetRange(p) {
+            const now = new Date();
+            if (p === 'all-time') {
+                return { from: '', to: '' };
+            }
+            if (p === 'last-month') {
+                const thisMonthStart = startOfMonth(now);
+                const lastMonthStart = new Date(thisMonthStart.getFullYear(), thisMonthStart.getMonth() - 1, 1);
+                const lastMonthEnd = endOfMonth(lastMonthStart);
+                return { from: fmt(lastMonthStart), to: fmt(lastMonthEnd) };
+            }
+            if (p === 'last-3-months') {
+                const fromD = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+                return { from: fmt(fromD), to: fmt(now) };
+            }
+            if (p === 'last-6-months') {
+                const fromD = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+                return { from: fmt(fromD), to: fmt(now) };
+            }
+            if (p === '1-year' || p === 'last-year') {
+                const fromD = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+                return { from: fmt(fromD), to: fmt(now) };
+            }
+            return null;
+        }
+
+        // Initialize dates to model values
+        try {
+            const fromModel = '@(Model.FromUtc?.ToString("yyyy-MM-dd") ?? "")';
+            const toModel = '@(Model.ToUtc?.ToString("yyyy-MM-dd") ?? "")';
+            if (fromModel) from.value = fromModel;
+            if (toModel) to.value = toModel;
+        } catch(err) {}
+
+        setCustomVisibility();
+        preset.addEventListener('change', setCustomVisibility);
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const params = new URLSearchParams();
+            params.set('preset', preset.value);
+            if (preset.value === 'custom') {
+                if (from.value) params.set('from', from.value);
+                if (to.value) params.set('to', to.value);
+            }
+            const categoryEl = document.getElementById('categoryId');
+            if (categoryEl && categoryEl.value) params.set('categoryId', categoryEl.value);
+            const res = await fetch(`/Dashboard/Summary?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            const data = await res.json();
+            document.getElementById('kpi-sales').textContent = new Intl.NumberFormat(undefined, { style: 'currency', currency: (Intl.NumberFormat().resolvedOptions().currency || 'USD') }).format(data.salesTotal ?? 0);
+            document.getElementById('kpi-enroll').textContent = data.enrollmentCount ?? 0;
+            document.getElementById('kpi-complete').textContent = data.completionCount ?? 0;
+            // TODO: Update charts once charts are added to the dashboard
+            // Also refresh the Moodle report using the same filters
+            reportPage = 1;
+            await loadReport();
+        });
+
+        function buildFilterParams() {
+            const params = new URLSearchParams();
+            params.set('preset', preset.value);
+            if (preset.value === 'custom') {
+                if (from.value) params.set('from', from.value);
+                if (to.value) params.set('to', to.value);
+            }
+            const categoryEl = document.getElementById('categoryId');
+            if (categoryEl && categoryEl.value) params.set('categoryId', categoryEl.value);
+            return params;
+        }
+
+        function fmtDate(d) {
+            if (!d) return '';
+            try { return new Date(d).toLocaleString(); } catch { return ''; }
+        }
+
+        function updateSortIndicators() {
+            if (!reportSortableHeaders) return;
+            reportSortableHeaders.forEach(th => {
+                const col = th.getAttribute('data-sort');
+                const title = th.getAttribute('data-title');
+                if (col === reportSortColumn) {
+                    th.innerText = `${title} ${reportSortDesc ? '▼' : '▲'}`;
+                } else {
+                    th.innerText = title;
+                }
+            });
+        }
+
+        // Toggle visibility of completion columns for WordPress mode
+        function applyModeColumnVisibility() {
+            const hide = reportMode === 'wordpress';
+            const completionHeaders = Array.from(document.querySelectorAll('th[data-sort="completionDate"], th[data-sort="fourthCompletionDate"]'));
+            completionHeaders.forEach(h => h.style.display = hide ? 'none' : '');
+            const enrolHeader = document.querySelector('th[data-sort="enrolmentDate"]');
+            if (enrolHeader) enrolHeader.style.display = hide ? 'none' : '';
+            document.querySelectorAll('td.col-enrolment, td.col-completion, td.col-fourth').forEach(td => {
+                td.style.display = hide ? 'none' : '';
+            });
+        }
+
+        async function loadReport() {
+            if (!reportTbody) initReportRefs();
+            const params = buildFilterParams();
+            params.set('search', reportSearch);
+            params.set('sortColumn', reportSortColumn);
+            params.set('sortDesc', reportSortDesc ? 'true' : 'false');
+            params.set('page', String(reportPage));
+            params.set('pageSize', String(reportPageSize));
+            
+            // Add report mode parameter and per-user parameter
+            params.set('reportMode', reportMode);
+            params.set('perUser', perUser ? 'true' : 'false');
+            
+            // Always use the MoodleReport endpoint - it now handles both modes
+            const res = await fetch(`/Dashboard/MoodleReport?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            const data = await res.json();
+            const items = data.items || [];
+            // Render rows with highlighting for merged data
+            reportTbody.innerHTML = items.map(r => {
+                const rowClass = r.highlightRed ? 'table-danger' : (r.highlightBlue ? 'table-info' : '');
+                const dataSourceBadge = r.dataSource === 'moodle' ? '<span class="badge bg-success">M</span>' :
+                                      r.dataSource === 'wordpress' ? '<span class="badge bg-primary">W</span>' :
+                                      r.dataSource === 'merged' ? '<span class="badge bg-warning">M+W</span>' : '';
+                
+                return `
+                <tr class="${rowClass}">
+                    <td>${r.lastName ?? ''} ${dataSourceBadge}</td>
+                    <td>${r.firstName ?? ''}</td>
+                    <td class="text-nowrap">${r.email ?? ''}</td>
+                    <td>${r.phoneNumber ?? '-'}</td>
+                    <td>${r.ppraNo ?? ''}</td>
+                    <td>${r.idNo ?? ''}</td>
+                    <td>${r.province ?? ''}</td>
+                    <td>${r.agency ?? ''}</td>
+                    <td>${r.courseName ?? ''}</td>
+                    <td>${r.category ?? ''}</td>
+                    <td class="text-nowrap col-enrolment">${fmtDate(r.enrolmentDate)}</td>
+                    <td class="text-nowrap col-completion">${fmtDate(r.completionDate)}</td>
+                    <td class="text-nowrap col-fourth">${fmtDate(r.fourthCompletionDate)}</td>
+                </tr>
+                `;
+            }).join('');
+            // Count
+            const total = data.totalCount ?? 0;
+            const page = data.page ?? reportPage;
+            const pageSize = data.pageSize ?? reportPageSize;
+            reportPage = page;
+            reportPageSize = pageSize;
+            reportCount.textContent = `${total.toLocaleString()} records`;
+            // Pager
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            const pages = [];
+            const windowSize = 5;
+            let start = Math.max(1, page - Math.floor(windowSize / 2));
+            let end = Math.min(totalPages, start + windowSize - 1);
+            start = Math.max(1, Math.min(start, Math.max(1, end - windowSize + 1)));
+            pages.push(`<li class="page-item ${page <= 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${page - 1}">Prev</a></li>`);
+            for (let p = start; p <= end; p++) {
+                pages.push(`<li class="page-item ${p === page ? 'active' : ''}"><a class="page-link" href="#" data-page="${p}">${p}</a></li>`);
+            }
+            pages.push(`<li class="page-item ${page >= totalPages ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${page + 1}">Next</a></li>`);
+            reportPager.innerHTML = pages.join('');
+            reportPager.querySelectorAll('a[data-page]').forEach(a => {
+                a.addEventListener('click', async (ev) => {
+                    ev.preventDefault();
+                    const p = parseInt(a.getAttribute('data-page') || '1', 10);
+                    if (!isNaN(p)) {
+                        reportPage = p;
+                        await loadReport();
+                    }
+                });
+            });
+            updateSortIndicators();
+            if (typeof applyModeColumnVisibility === 'function') {
+                applyModeColumnVisibility();
+            }
+        }
+
+        function initReportRefs() {
+            reportSearchInput = document.getElementById('report-search');
+            reportSearchBtn = document.getElementById('report-search-btn');
+            reportTbody = document.getElementById('report-tbody');
+            reportPager = document.getElementById('report-pager');
+            reportCount = document.getElementById('report-count');
+            reportPageSizeSel = document.getElementById('report-page-size');
+            reportSortableHeaders = Array.from(document.querySelectorAll('th[data-sort]'));
+            reportModeSelect = document.getElementById('report-mode-select');
+            perUserToggle = document.getElementById('per-user-toggle');
+            perUserCheckbox = document.getElementById('per-user');
+            reportTitle = document.getElementById('report-title');
+
+            reportPageSizeSel.addEventListener('change', async () => {
+                const v = parseInt(reportPageSizeSel.value, 10);
+                reportPageSize = isNaN(v) ? 25 : v;
+                reportPage = 1;
+                await loadReport();
+            });
+            reportSearchBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                reportSearch = reportSearchInput.value.trim();
+                reportPage = 1;
+                await loadReport();
+            });
+            reportSearchInput.addEventListener('keyup', async (e) => {
+                if (e.key === 'Enter') {
+                    reportSearch = reportSearchInput.value.trim();
+                    reportPage = 1;
+                    await loadReport();
+                }
+            });
+            reportSortableHeaders.forEach(th => {
+                // Preserve original label
+                if (!th.getAttribute('data-title')) th.setAttribute('data-title', th.textContent.trim());
+                th.addEventListener('click', async () => {
+                    const col = th.getAttribute('data-sort');
+                    if (col === reportSortColumn) {
+                        reportSortDesc = !reportSortDesc;
+                    } else {
+                        reportSortColumn = col;
+                        reportSortDesc = false;
+                    }
+                    reportPage = 1;
+                    await loadReport();
+                });
+            });
+
+            // Report mode dropdown functionality
+            if (reportModeSelect) {
+                reportModeSelect.addEventListener('change', async () => {
+                    reportMode = reportModeSelect.value;
+                    
+                    // Update report title based on mode
+                    if (reportTitle) {
+                        const titles = {
+                            'moodle': 'Moodle Student Completion Report',
+                            'wordpress': 'WordPress Student Completion Report',
+                            'both': 'Merged Student Completion Report'
+                        };
+                        reportTitle.textContent = titles[reportMode] || 'Student Completion Report';
+                    }
+                    
+                    // Reset to first page and reload
+                    reportPage = 1;
+                    await loadReport();
+                });
+            }
+
+            // Per-user toggle (all modes)
+            if (perUserCheckbox) {
+                perUserCheckbox.addEventListener('change', async () => {
+                    perUser = perUserCheckbox.checked;
+                    reportPage = 1;
+                    await loadReport();
+                });
+            }
+
+            // (removed duplicate applyModeColumnVisibility inside initReportRefs)
+        }
+
+        // Initialize report after DOM is ready
+        window.addEventListener('DOMContentLoaded', async () => {
+            initReportRefs();
+            initExportModal();
+            await loadReport();
+            if (typeof applyModeColumnVisibility === 'function') {
+                applyModeColumnVisibility();
+            }
+        });
+
+        // Export Modal Functionality
+        function initExportModal() {
+            console.log('Initializing export modal...');
+            const exportBtn = document.getElementById('export-excel-btn');
+            
+            // Exit early if export button doesn't exist (non-Charter admin users)
+            if (!exportBtn) {
+                console.log('Export button not found - user is not a Charter Admin');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('exportModal'));
+            const columnSelection = document.getElementById('column-selection');
+            const selectAllBtn = document.getElementById('select-all-columns');
+            const deselectAllBtn = document.getElementById('deselect-all-columns');
+            const confirmExportBtn = document.getElementById('confirm-export');
+
+            console.log('Export button:', exportBtn);
+            console.log('Column selection div:', columnSelection);
+
+            let availableColumns = [];
+
+            // Load available columns
+            fetch('/Dashboard/GetAvailableColumns')
+                .then(res => {
+                    console.log('Response status:', res.status);
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    return res.json();
+                })
+                .then(columns => {
+                    console.log('Received columns:', columns);
+                    availableColumns = columns;
+                    renderColumnCheckboxes();
+                })
+                .catch(err => {
+                    console.error('Failed to load columns:', err);
+                    // Fallback: render default columns if API fails
+                    availableColumns = [
+                        { value: "LastName", label: "Last Name" },
+                        { value: "FirstName", label: "First Name" },
+                        { value: "Email", label: "Email" },
+                        { value: "PhoneNumber", label: "Phone Number" },
+                        { value: "PpraNo", label: "PPRA No" },
+                        { value: "IdNo", label: "ID No" },
+                        { value: "Province", label: "Province" },
+                        { value: "Agency", label: "Agency" },
+                        { value: "CourseName", label: "Course Name" },
+                        { value: "Category", label: "Category" },
+                        { value: "EnrolmentDate", label: "Enrolment Date" },
+                        { value: "CompletionDate", label: "Completion Date" },
+                        { value: "FourthCompletionDate", label: "4th Completion Date" }
+                    ];
+                    renderColumnCheckboxes();
+                });
+
+            function renderColumnCheckboxes() {
+                console.log('Rendering checkboxes for columns:', availableColumns);
+                console.log('Column selection element:', columnSelection);
+                
+                if (!availableColumns || availableColumns.length === 0) {
+                    console.error('No columns available to render');
+                    columnSelection.innerHTML = '<div class="col-12"><p class="text-danger text-center">No columns available</p></div>';
+                    return;
+                }
+                
+                const checkboxHtml = availableColumns.map(col => `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="form-check p-2 border rounded hover-highlight">
+                            <input class="form-check-input column-checkbox" type="checkbox" 
+                                   value="${col.value}" id="col-${col.value}" checked>
+                            <label class="form-check-label" for="col-${col.value}" style="cursor: pointer;">
+                                ${col.label}
+                            </label>
+                        </div>
+                    </div>
+                `).join('');
+                
+                console.log('Generated HTML:', checkboxHtml);
+                columnSelection.innerHTML = checkboxHtml;
+                console.log('Updated columnSelection innerHTML');
+                
+                // Add hover effect styling
+                const style = document.createElement('style');
+                style.textContent = `
+                    .hover-highlight:hover {
+                        background-color: #f8f9fa;
+                        transition: background-color 0.2s;
+                    }
+                    .form-check-input:checked + .form-check-label {
+                        font-weight: 500;
+                    }
+                `;
+                if (!document.querySelector('#column-hover-styles')) {
+                    style.id = 'column-hover-styles';
+                    document.head.appendChild(style);
+                }
+                
+                // Update selection count
+                updateSelectionCount();
+                
+                // Add change listeners to update count
+                document.querySelectorAll('.column-checkbox').forEach(cb => {
+                    cb.addEventListener('change', updateSelectionCount);
+                });
+            }
+
+            function getSelectedColumns() {
+                return Array.from(document.querySelectorAll('.column-checkbox:checked'))
+                    .map(cb => cb.value);
+            }
+
+            function setAllColumns(checked) {
+                document.querySelectorAll('.column-checkbox').forEach(cb => {
+                    cb.checked = checked;
+                });
+                updateSelectionCount();
+            }
+            
+            function updateSelectionCount() {
+                const selectedCount = document.querySelectorAll('.column-checkbox:checked').length;
+                const totalCount = document.querySelectorAll('.column-checkbox').length;
+                const countElement = document.getElementById('selection-count');
+                
+                if (countElement) {
+                    countElement.textContent = `${selectedCount} of ${totalCount} selected`;
+                    
+                    // Update badge color based on selection
+                    if (selectedCount === 0) {
+                        countElement.className = 'badge bg-danger';
+                    } else if (selectedCount === totalCount) {
+                        countElement.className = 'badge bg-success';
+                    } else {
+                        countElement.className = 'badge bg-primary';
+                    }
+                }
+                
+                // Enable/disable export button based on selection
+                const exportBtn = document.getElementById('confirm-export');
+                if (exportBtn) {
+                    exportBtn.disabled = selectedCount === 0;
+                    if (selectedCount === 0) {
+                        exportBtn.classList.remove('btn-success');
+                        exportBtn.classList.add('btn-secondary');
+                    } else {
+                        exportBtn.classList.remove('btn-secondary');
+                        exportBtn.classList.add('btn-success');
+                    }
+                }
+            }
+
+            // Initialize columns immediately with fallback
+            if (availableColumns.length === 0) {
+                availableColumns = [
+                    { value: "LastName", label: "Last Name" },
+                    { value: "FirstName", label: "First Name" },
+                    { value: "Email", label: "Email" },
+                    { value: "PhoneNumber", label: "Phone Number" },
+                    { value: "PpraNo", label: "PPRA No" },
+                    { value: "IdNo", label: "ID No" },
+                    { value: "Province", label: "Province" },
+                    { value: "Agency", label: "Agency" },
+                    { value: "CourseName", label: "Course Name" },
+                    { value: "Category", label: "Category" },
+                    { value: "EnrolmentDate", label: "Enrolment Date" },
+                    { value: "CompletionDate", label: "Completion Date" },
+                    { value: "FourthCompletionDate", label: "4th Completion Date" }
+                ];
+                console.log('Using fallback columns');
+                renderColumnCheckboxes();
+            }
+
+            // Event listeners
+            exportBtn.addEventListener('click', () => {
+                console.log('Export button clicked');
+                // Ensure columns are rendered when modal opens
+                if (columnSelection.innerHTML.trim() === '' || columnSelection.innerHTML.includes('No columns available')) {
+                    console.log('Column selection is empty, re-rendering...');
+                    renderColumnCheckboxes();
+                }
+                modal.show();
+            });
+
+            // Also render columns when modal is shown (Bootstrap event)
+            document.getElementById('exportModal').addEventListener('shown.bs.modal', function () {
+                console.log('Modal shown, checking column rendering...');
+                if (columnSelection.innerHTML.trim() === '' || !columnSelection.querySelector('.column-checkbox')) {
+                    console.log('Re-rendering columns on modal show...');
+                    renderColumnCheckboxes();
+                }
+            });
+
+            selectAllBtn.addEventListener('click', () => setAllColumns(true));
+            deselectAllBtn.addEventListener('click', () => setAllColumns(false));
+
+            confirmExportBtn.addEventListener('click', async () => {
+                let selectedColumns = getSelectedColumns();
+                if (selectedColumns.length === 0) {
+                    // Fallback to all available columns to ensure export proceeds
+                    selectedColumns = (availableColumns || []).map(c => c.value);
+                }
+
+                // Show loading state
+                const originalBtnContent = confirmExportBtn.innerHTML;
+                confirmExportBtn.disabled = true;
+                confirmExportBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
+
+                try {
+                    // Build form data with current filters
+                    const formData = new FormData();
+                    
+                    // Add selected columns
+                    selectedColumns.forEach(col => formData.append('selectedColumns', col));
+                    
+                    // Add current filter values
+                    const filterParams = buildFilterParams();
+                    if (preset.value === 'custom') {
+                        if (from.value) {
+                            const fromDate = new Date(from.value + 'T00:00:00Z');
+                            formData.append('fromUtc', fromDate.toISOString());
+                        }
+                        if (to.value) {
+                            const toDate = new Date(to.value + 'T23:59:59Z');
+                            formData.append('toUtc', toDate.toISOString());
+                        }
+                    } else if (preset.value !== 'all-time') {
+                        const range = computePresetRange(preset.value);
+                        if (range && range.from) {
+                            const fromDate = new Date(range.from + 'T00:00:00Z');
+                            formData.append('fromUtc', fromDate.toISOString());
+                        }
+                        if (range && range.to) {
+                            const toDate = new Date(range.to + 'T23:59:59Z');
+                            formData.append('toUtc', toDate.toISOString());
+                        }
+                    }
+                    
+                    // Add category filter if applicable
+                    const categoryEl = document.getElementById('categoryId');
+                    if (categoryEl && categoryEl.value) {
+                        formData.append('courseCategoryId', categoryEl.value);
+                    }
+                    
+                    // Add search term
+                    if (reportSearch) {
+                        formData.append('search', reportSearch);
+                    }
+
+                    // Make the export request to appropriate endpoint based on report mode
+                    let exportEndpoint;
+                    if (reportMode === 'wordpress') {
+                        exportEndpoint = '/WordPressReport/ExportExcel';
+                        // WordPress export ignores completion logic; no perUser needed
+                    } else if (reportMode === 'both') {
+                        exportEndpoint = '/Export/ExcelMergedReport';
+                        formData.append('perUser', perUser ? 'true' : 'false');
+                    } else {
+                        exportEndpoint = '/Export/ExcelMoodleReport';
+                        formData.append('perUser', perUser ? 'true' : 'false');
+                    }
+                    
+                    const response = await fetch(exportEndpoint, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Export failed');
+                    }
+
+                    // Download the file
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    
+                    // Extract filename from response headers if available
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let fileName = reportMode === 'wordpress' ? 'WordPress_Report.xlsx' : 
+                                 reportMode === 'both' ? 'Merged_Report.xlsx' : 'Moodle_Report.xlsx';
+                    if (contentDisposition) {
+                        const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (fileNameMatch && fileNameMatch[1]) {
+                            fileName = fileNameMatch[1].replace(/['"]/g, '');
+                        }
+                    }
+                    
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    // Close modal
+                    modal.hide();
+                    
+                    // Show success feedback
+                    const successToast = document.createElement('div');
+                    successToast.className = 'position-fixed bottom-0 end-0 p-3';
+                    successToast.style.zIndex = '9999';
+                    successToast.innerHTML = `
+                        <div class="toast show align-items-center text-white bg-success border-0" role="alert">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    <i class="fas fa-check-circle me-2"></i>Excel export started successfully!
+                                </div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(successToast);
+                    setTimeout(() => successToast.remove(), 3000);
+                    
+                } catch (error) {
+                    // Show error in a more user-friendly way
+                    const errorAlert = document.createElement('div');
+                    errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                    errorAlert.innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Export failed:</strong> ${error.message || 'An unexpected error occurred'}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    const modalBody = document.querySelector('#exportModal .modal-body');
+                    modalBody.insertBefore(errorAlert, modalBody.firstChild);
+                } finally {
+                    // Reset button state
+                    confirmExportBtn.disabled = false;
+                    confirmExportBtn.innerHTML = originalBtnContent;
+                    updateSelectionCount(); // Re-enable button if columns are selected
+                }
+            });
+        }
+    })();
+</script>
+

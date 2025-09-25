@@ -1,0 +1,22 @@
+---
+name: Full Project Implementation Workflow
+appliesTo:
+  - "**/*"
+triggers:
+  keywords: ["project setup", "bootstrap", "fresh install", "end-to-end"]
+order: 12
+---
+# FULL PROJECT WORKFLOW (Compact)
+
+High-level guardrails to minimize default context. Full details at @Rules/Workflows/full-project-implementation-workflow.md.
+
+## PHASES
+SETUP → INFRASTRUCTURE → CORE → FEATURES → TESTING → DEPLOYMENT
+
+## CONSTRAINTS
+- Live data only; server-side-first policy
+- Security and POPI redaction priority
+
+## LOAD STRATEGY
+- Phase-specific minimal files only (e.g., DI + current module)
+

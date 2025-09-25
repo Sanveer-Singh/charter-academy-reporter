@@ -1,0 +1,107 @@
+@using Charter.Reporter.Web.Models
+@using Newtonsoft.Json
+@{
+    // Get notifications from TempData directly in the view
+    var notificationsJson = TempData["Notifications"] as string;
+    var notifications = new List<NotificationMessage>();
+    
+    if (!string.IsNullOrEmpty(notificationsJson))
+    {
+        try
+        {
+            notifications = JsonConvert.DeserializeObject<List<NotificationMessage>>(notificationsJson) ?? new List<NotificationMessage>();
+            // Put them back so they persist through the request
+            TempData["Notifications"] = notificationsJson;
+        }
+        catch (JsonException)
+        {
+            // If deserialization fails, use empty list
+        }
+    }
+}
+
+@if (notifications.Any())
+{
+    <div id="notifications-container" class="mb-3" role="alert" aria-live="polite" aria-label="Notifications">
+        @foreach (var notification in notifications)
+        {
+            <div class="alert @notification.CssClass @(notification.Dismissible ? "alert-dismissible" : "") fade show notification-alert" 
+                 role="alert" 
+                 data-auto-hide="@notification.AutoHide.ToString().ToLower()" 
+                 data-auto-hide-delay="@notification.AutoHideDelay"
+                 aria-labelledby="notification-title-@notifications.IndexOf(notification)"
+                 aria-describedby="notification-message-@notifications.IndexOf(notification)">
+                
+                <div class="d-flex align-items-start">
+                    <div class="notification-icon mr-3">
+                        <i class="@notification.IconClass" aria-hidden="true"></i>
+                    </div>
+                    <div class="notification-content flex-grow-1">
+                        @if (!string.IsNullOrEmpty(notification.Title))
+                        {
+                            <h6 class="alert-heading mb-1" id="notification-title-@notifications.IndexOf(notification)">
+                                @notification.Title
+                            </h6>
+                        }
+                        <div id="notification-message-@notifications.IndexOf(notification)">
+                            @Html.Raw(notification.Message)
+                        </div>
+                    </div>
+                </div>
+
+                @if (notification.Dismissible)
+                {
+                    <button type="button" 
+                            class="close" 
+                            data-dismiss="alert" 
+                            aria-label="Close notification"
+                            tabindex="0">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-hide notifications
+            const notifications = document.querySelectorAll('.notification-alert[data-auto-hide="true"]');
+            notifications.forEach(function(notification) {
+                const delay = parseInt(notification.getAttribute('data-auto-hide-delay')) || 5000;
+                setTimeout(function() {
+                    if (notification.classList.contains('show')) {
+                        // Use Bootstrap's alert component to hide
+                        const bsAlert = new bootstrap.Alert(notification);
+                        bsAlert.close();
+                    }
+                }, delay);
+            });
+
+            // Add keyboard support for close buttons
+            const closeButtons = document.querySelectorAll('.notification-alert .close');
+            closeButtons.forEach(function(button) {
+                button.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        button.click();
+                    }
+                });
+            });
+
+            // Announce notifications to screen readers
+            const container = document.getElementById('notifications-container');
+            if (container && notifications.length > 0) {
+                const announcement = `${notifications.length} notification${notifications.length > 1 ? 's' : ''} available`;
+                const sr = document.createElement('div');
+                sr.className = 'sr-only';
+                sr.setAttribute('aria-live', 'polite');
+                sr.textContent = announcement;
+                document.body.appendChild(sr);
+                setTimeout(() => document.body.removeChild(sr), 1000);
+            }
+        });
+    </script>
+
+
+}

@@ -1,0 +1,13 @@
+---
+name: Workflow State
+appliesTo:
+  - "**/.cursor/.cursorrules"
+  - "**/.cursor/rules/**"
+triggers:
+  keywords: ["update state", "phase", "task", "blocker"]
+order: 5
+---
+# WORKFLOW STATE MANAGEMENT
+
+Use this file to annotate current task/phase minimally to guide context without loading unrelated modules.
+

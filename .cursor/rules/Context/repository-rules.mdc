@@ -1,0 +1,380 @@
+---
+name: Repository Rules
+appliesTo:
+  - "**/Data/Repositories/**/*.cs"
+  - "**/*Repository.cs"
+triggers:
+  keywords: ["repository", "EF Core", "AsNoTracking", "Include", "IQueryable"]
+order: 40
+---
+# REPOSITORY CONTEXT RULES
+
+## When working in @Data/Repositories/*
+
+### IMMUTABLE REPOSITORY RULES
+- MUST implement interface from @Data/Repositories/Interfaces/*
+- MUST inherit from BaseRepository<T> when possible
+- MUST return IQueryable for composable queries
+- MUST NOT materialize queries prematurely (.ToList())
+- MUST use AsNoTracking() for read operations
+- MUST NOT contain business logic
+- MUST handle only data access concerns
+- MUST NOT call SaveChangesAsync() (UnitOfWork commits)
+
+### BASE REPOSITORY PATTERN
+```csharp
+// @Data/Repositories/BaseRepository.cs
+public abstract class BaseRepository<T> : IRepository<T> where T : class
+{
+    protected readonly DbContext _context;
+    protected readonly DbSet<T> _dbSet;
+    
+    protected BaseRepository(DbContext context)
+    {
+        _context = context;
+        _dbSet = context.Set<T>();
+    }
+    
+    public virtual async Task<T> GetByIdAsync(int id)
+    {
+        return await _dbSet.FindAsync(id);
+    }
+    
+    public virtual IQueryable<T> GetQueryable()
+    {
+        return _dbSet.AsQueryable();
+    }
+    
+    public virtual async Task<T> AddAsync(T entity)
+    {
+        await _dbSet.AddAsync(entity);
+        return entity; // Commit via IUnitOfWork.SaveChangesAsync()
+    }
+    
+    public virtual Task UpdateAsync(T entity)
+    {
+        _dbSet.Update(entity);
+        return Task.CompletedTask; // Commit via IUnitOfWork.SaveChangesAsync()
+    }
+    
+    public virtual Task DeleteAsync(T entity)
+    {
+        _dbSet.Remove(entity);
+        return Task.CompletedTask; // Commit via IUnitOfWork.SaveChangesAsync()
+    }
+    
+    public virtual async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await _dbSet.AnyAsync(predicate);
+    }
+}
+```
+
+### SPECIFIC REPOSITORY PATTERN
+```csharp
+// @Data/Repositories/Interfaces/ICourseRepository.cs
+public interface ICourseRepository : IRepository<Course>
+{
+    Task<IQueryable<Course>> GetCpdCoursesAsync();
+    Task<Course> GetCourseWithEnrollmentsAsync(int courseId);
+    Task<IQueryable<CourseEnrollment>> GetEnrollmentsByUserAsync(string userId, int year);
+    Task<IQueryable<CourseCompletion>> GetCompletionsByUserAsync(string userId, int year);
+    Task<Dictionary<string, int>> GetCompletionCountsAsync(int year);
+}
+
+// @Data/Repositories/CourseRepository.cs
+public class CourseRepository : BaseRepository<Course>, ICourseRepository
+{
+    private readonly ExternalDbContext _externalContext;
+    
+    public CourseRepository(ApplicationDbContext context, ExternalDbContext externalContext) 
+        : base(context)
+    {
+        _externalContext = externalContext;
+    }
+    
+    public async Task<IQueryable<Course>> GetCpdCoursesAsync()
+    {
+        // Return IQueryable for further composition
+        return _externalContext.MdlCourses
+            .AsNoTracking()
+            .Include(c => c.Category)
+            .Where(c => c.Category.Name.Contains("CPD") || 
+                       AppConstants.CpdCategoryIds.Contains(c.CategoryId));
+    }
+    
+    public async Task<Course> GetCourseWithEnrollmentsAsync(int courseId)
+    {
+        return await _externalContext.MdlCourses
+            .AsNoTracking()
+            .Include(c => c.Enrollments)
+                .ThenInclude(e => e.User)
+            .Include(c => c.Completions)
+            .FirstOrDefaultAsync(c => c.Id == courseId);
+    }
+}
+```
+
+### QUERY COMPOSITION PATTERN
+```csharp
+public class ReportRepository : BaseRepository<Report>, IReportRepository
+{
+    // Return IQueryable for service layer to compose
+    public IQueryable<Report> GetUserReportsQuery(string userId)
+    {
+        return _dbSet
+            .AsNoTracking()
+            .Where(r => r.UserId == userId);
+    }
+    
+    // Complex queries with multiple joins
+    public async Task<IQueryable<EnrollmentReportData>> GetEnrollmentReportDataAsync(
+        DateTime startDate, 
+        DateTime endDate)
+    {
+        return from enrollment in _externalContext.MdlUserEnrolments.AsNoTracking()
+               join user in _externalContext.MdlUsers on enrollment.UserId equals user.Id
+               join enrol in _externalContext.MdlEnrols on enrollment.EnrolId equals enrol.Id
+               join course in _externalContext.MdlCourses on enrol.CourseId equals course.Id
+               join category in _externalContext.MdlCourseCategories on course.CategoryId equals category.Id
+               where enrollment.TimeCreated >= startDate.ToUnixTimestamp() &&
+                     enrollment.TimeCreated <= endDate.ToUnixTimestamp() &&
+                     category.Name.Contains("CPD")
+               select new EnrollmentReportData
+               {
+                   UserId = user.Id,
+                   UserEmail = user.Email,
+                   CourseName = course.FullName,
+                   EnrollmentDate = DateTimeOffset.FromUnixTimeSeconds(enrollment.TimeCreated).DateTime,
+                   Status = enrollment.Status
+               };
+    }
+}
+```
+
+### PAGINATION SUPPORT
+```csharp
+public static class QueryableExtensions
+{
+    public static async Task<PagedData<T>> ToPagedAsync<T>(
+        this IQueryable<T> query,
+        int page,
+        int pageSize) where T : class
+    {
+        var totalCount = await query.CountAsync();
+        
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        
+        return new PagedData<T>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+        };
+    }
+}
+
+// Usage in repository
+public async Task<PagedData<Course>> GetPagedCoursesAsync(int page, int pageSize)
+{
+    return await _dbSet
+        .AsNoTracking()
+        .OrderBy(c => c.Name)
+        .ToPagedAsync(page, pageSize);
+}
+```
+
+### PERFORMANCE PATTERNS
+```csharp
+public class OptimizedCourseRepository : BaseRepository<Course>, ICourseRepository
+{
+    // Use projection for performance
+    public async Task<List<CourseStatsDto>> GetCourseStatisticsAsync()
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Select(c => new CourseStatsDto
+            {
+                CourseId = c.Id,
+                CourseName = c.Name,
+                EnrollmentCount = c.Enrollments.Count(),
+                CompletionCount = c.Completions.Count(),
+                CompletionRate = c.Enrollments.Any() 
+                    ? (double)c.Completions.Count() / c.Enrollments.Count() * 100 
+                    : 0
+            })
+            .ToListAsync();
+    }
+    
+    // Batch operations for efficiency
+    public async Task BulkUpdateAsync(List<Course> courses)
+    {
+        _context.UpdateRange(courses);
+        await _context.SaveChangesAsync();
+    }
+    
+    // Use compiled queries for frequently used queries
+    private static readonly Func<ExternalDbContext, int, Task<Course>> _getCourseById =
+        EF.CompileAsyncQuery((ExternalDbContext context, int id) =>
+            context.MdlCourses
+                .AsNoTracking()
+                .Include(c => c.Category)
+                .FirstOrDefault(c => c.Id == id));
+    
+    public Task<Course> GetCourseByIdCompiledAsync(int id)
+    {
+        return _getCourseById(_externalContext, id);
+    }
+}
+```
+
+### EXTERNAL DATABASE ACCESS
+```csharp
+public class ExternalDataRepository : IExternalDataRepository
+{
+    private readonly ExternalDbContext _context;
+    
+    public ExternalDataRepository(ExternalDbContext context)
+    {
+        _context = context;
+    }
+    
+    // Read-only queries against external database
+    public async Task<IQueryable<WooCommerceOrder>> GetOrdersAsync(
+        DateTime startDate,
+        DateTime endDate)
+    {
+        return _context.WpWcOrders
+            .AsNoTracking()
+            .Where(o => o.Status == "wc-completed" &&
+                       o.DateCreated >= startDate &&
+                       o.DateCreated <= endDate)
+            .Include(o => o.OrderItems)
+            .Include(o => o.Customer);
+    }
+    
+    // Join across external tables
+    public async Task<IQueryable<UserPurchaseData>> GetUserPurchasesAsync(string email)
+    {
+        return from order in _context.WpWcOrders.AsNoTracking()
+               join user in _context.WpUsers on order.CustomerId equals user.Id
+               join item in _context.WpWcOrderItems on order.Id equals item.OrderId
+               where user.Email == email && order.Status == "wc-completed"
+               select new UserPurchaseData
+               {
+                   OrderId = order.Id,
+                   ProductName = item.ProductName,
+                   PurchaseDate = order.DateCreated,
+                   Amount = item.Total
+               };
+    }
+}
+```
+
+### UNIT OF WORK PATTERN
+```csharp
+public interface IUnitOfWork : IDisposable
+{
+    ICourseRepository Courses { get; }
+    IUserRepository Users { get; }
+    IReportRepository Reports { get; }
+    Task<int> SaveChangesAsync();
+    Task<IDbContextTransaction> BeginTransactionAsync();
+}
+
+public class UnitOfWork : IUnitOfWork
+{
+    private readonly ApplicationDbContext _context;
+    private readonly ExternalDbContext _externalContext;
+    
+    public ICourseRepository Courses { get; }
+    public IUserRepository Users { get; }
+    public IReportRepository Reports { get; }
+    
+    public UnitOfWork(
+        ApplicationDbContext context,
+        ExternalDbContext externalContext,
+        ICourseRepository courses,
+        IUserRepository users,
+        IReportRepository reports)
+    {
+        _context = context;
+        _externalContext = externalContext;
+        
+        Courses = courses;
+        Users = users;
+        Reports = reports;
+    }
+    
+    public Task<int> SaveChangesAsync()
+    {
+        return _context.SaveChangesAsync();
+    }
+    
+    public Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return _context.Database.BeginTransactionAsync();
+    }
+    
+    public void Dispose()
+    {
+        _context?.Dispose();
+        _externalContext?.Dispose();
+    }
+}
+```
+
+### COMMON ANTI-PATTERNS TO AVOID
+```csharp
+// ❌ BAD: Materializing too early
+public async Task<List<Course>> GetFilteredCourses(string category)
+{
+    var courses = await _dbSet.ToListAsync(); // Loads ALL courses!
+    return courses.Where(c => c.Category == category).ToList();
+}
+
+// ✅ GOOD: Filter at database level
+public IQueryable<Course> GetFilteredCourses(string category)
+{
+    return _dbSet.Where(c => c.Category == category);
+}
+
+// ❌ BAD: N+1 query problem
+foreach (var course in courses)
+{
+    var enrollments = await _context.Enrollments
+        .Where(e => e.CourseId == course.Id)
+        .ToListAsync();
+}
+
+// ✅ GOOD: Use Include for eager loading
+var coursesWithEnrollments = await _dbSet
+    .Include(c => c.Enrollments)
+    .ToListAsync();
+
+// ❌ BAD: Business logic in repository
+public async Task<List<Course>> GetCompletedCoursesForCompliantUsers()
+{
+    // Complex business logic here
+}
+
+// ✅ GOOD: Return IQueryable, let service handle business logic
+public IQueryable<Course> GetCompletedCourses()
+{
+    return _dbSet.Where(c => c.Completions.Any());
+}
+```
+
+### TESTING CONSIDERATIONS
+- Use in-memory database for unit tests
+- Test complex queries with integration tests
+- Verify AsNoTracking() is used for reads
+- Test Include() statements work correctly
+- Ensure queries are efficient (no N+1)
+- Test transaction rollback scenarios
+

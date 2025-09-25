@@ -1,0 +1,17 @@
+---
+name: Export Safety Router
+appliesTo:
+  - "**/Services/**/Export*.cs"
+  - "**/Controllers/**/*Export*.cs"
+triggers:
+  keywords: ["export", "csv", "xlsx", "redact", "POPI", "PII"]
+order: 16
+---
+# EXPORT SAFETY ROUTER
+
+- Charter Admin: full columns
+- REBOSA/PPRA: redact PII by default; enforce per-column role filters
+- Log export attempts to audit trail
+
+Use @Services/ExportService.cs redaction rules where available.
+
