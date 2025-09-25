@@ -536,9 +536,7 @@
                 });
             });
             updateSortIndicators();
-            if (typeof applyModeColumnVisibility === 'function') {
-                applyModeColumnVisibility();
-            }
+            applyModeColumnVisibility();
         }
 
         function initReportRefs() {
@@ -619,7 +617,17 @@
                 });
             }
 
-            // (removed duplicate applyModeColumnVisibility inside initReportRefs)
+            // Toggle visibility of completion columns for WordPress mode
+            function applyModeColumnVisibility() {
+                const hide = reportMode === 'wordpress';
+                const completionHeaders = Array.from(document.querySelectorAll('th[data-sort="completionDate"], th[data-sort="fourthCompletionDate"]'));
+                completionHeaders.forEach(h => h.style.display = hide ? 'none' : '');
+                const enrolHeader = document.querySelector('th[data-sort="enrolmentDate"]');
+                if (enrolHeader) enrolHeader.style.display = hide ? 'none' : '';
+                document.querySelectorAll('td.col-enrolment, td.col-completion, td.col-fourth').forEach(td => {
+                    td.style.display = hide ? 'none' : '';
+                });
+            }
         }
 
         // Initialize report after DOM is ready
@@ -627,9 +635,7 @@
             initReportRefs();
             initExportModal();
             await loadReport();
-            if (typeof applyModeColumnVisibility === 'function') {
-                applyModeColumnVisibility();
-            }
+            applyModeColumnVisibility();
         });
 
         // Export Modal Functionality
