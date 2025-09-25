@@ -1,0 +1,19 @@
+---
+name: Data Source Router
+appliesTo:
+  - "**/Data/**/*.cs"
+  - "**/appsettings*.json"
+triggers:
+  keywords: ["MariaDB", "MySQL", "SQLite", "connection string", "Edwiser", "WooCommerce", "Moodle"]
+order: 17
+---
+# DATA SOURCE ROUTER
+
+Load only:
+- Context(s) and repository interfaces in scope
+- appsettings entries referenced by the current change
+
+Notes:
+- External DB is read-only; use Pomelo MySQL provider; EF parameterized queries only
+- Respect configurable table prefixes; validate joins against Edwiser Bridge mapping
+

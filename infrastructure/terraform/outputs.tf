@@ -26,8 +26,8 @@ output "iam_role_arn" {
 }
 
 output "s3_artifacts_bucket" {
-  description = "S3 bucket name for deployment artifacts (if enabled)"
-  value       = var.enable_artifacts_bucket ? aws_s3_bucket.artifacts[0].bucket : null
+  description = "S3 bucket name for deployment artifacts"
+  value       = aws_s3_bucket.artifacts.bucket
 }
 
 output "route53_zone_id" {
@@ -45,10 +45,10 @@ output "deployment_info" {
   description = "Key deployment information for application setup"
   value = {
     domain_name           = var.domain_name
-    elastic_ip            = aws_eip.charter_reporter.public_ip
-    instance_id           = aws_instance.charter_reporter.id
-    s3_artifacts_bucket   = var.enable_artifacts_bucket ? aws_s3_bucket.artifacts[0].bucket : null
-    parameter_store_path  = var.enable_parameter_store ? "/charter-reporter" : null
+    elastic_ip           = aws_eip.charter_reporter.public_ip
+    instance_id          = aws_instance.charter_reporter.id
+    s3_artifacts_bucket  = aws_s3_bucket.artifacts.bucket
+    parameter_store_path = "/charter-reporter"
   }
 }
 
@@ -67,12 +67,12 @@ output "ssm_session_command" {
 # Parameter Store setup commands
 output "parameter_store_setup_commands" {
   description = "Commands to set up secrets in Parameter Store"
-  value       = var.enable_parameter_store ? [
+  value = [
     "aws ssm put-parameter --name '/charter-reporter/mariadb/moodle/password' --type SecureString --value 'YOUR_MOODLE_PASSWORD' --overwrite --region ${var.aws_region}",
     "aws ssm put-parameter --name '/charter-reporter/mariadb/woo/password' --type SecureString --value 'YOUR_WOO_PASSWORD' --overwrite --region ${var.aws_region}",
     "aws ssm put-parameter --name '/charter-reporter/admin/email' --type String --value '${var.admin_email}' --overwrite --region ${var.aws_region}",
     "aws ssm put-parameter --name '/charter-reporter/admin/password' --type SecureString --value '${random_password.admin_password.result}' --overwrite --region ${var.aws_region}"
-  ] : []
+  ]
   sensitive = true
 }
 

@@ -1,0 +1,12 @@
+---
+name: Controller Templates
+appliesTo:
+  - "**/Controllers/**/*.cs"
+triggers:
+  keywords: ["scaffold controller", "create controller", "action template"]
+order: 90
+---
+# CONTROLLER TEMPLATES (Index)
+
+Use concrete patterns from @Rules/Templates/controller-templates.md. Load only files for the current controller and its immediate service/viewmodels.
+

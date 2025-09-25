@@ -1,0 +1,9 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+YOU MUST NOT DELETE DATA,TABLES COLUMNS  OR DATABASES
+all executed (by script or in code must be wrapped in transactions)
+
+YOU MUST NOT EDIT COLUMNS, RECORDS, TABLES OR DATABASES. 

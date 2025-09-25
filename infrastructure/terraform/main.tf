@@ -40,8 +40,7 @@ data "aws_subnet" "existing_public" {
 }
 
 data "aws_security_group" "mariadb" {
-  count = var.enable_db_access ? 1 : 0
-  id    = var.mariadb_security_group_id
+  id = var.mariadb_security_group_id
 }
 
 # Random password for initial admin user
@@ -65,19 +64,14 @@ resource "aws_security_group" "charter_reporter_web" {
   description = "Security group for Charter Reporter web application"
   vpc_id      = data.aws_vpc.existing.id
 
-  # HTTPS from anywhere (optional)
-  dynamic "ingress" {
-    for_each = var.enable_https ? [1] : []
-    content {
-      description = "HTTPS"
-      from_port   = 443
-      to_port     = 443
-      protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
+    description = "HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
   }
 
-  # HTTP open for minimal deploy
   ingress {
     description = "HTTP"
     from_port   = 80
@@ -101,14 +95,7 @@ resource "aws_security_group" "charter_reporter_web" {
 
 # Add ingress rule to existing MariaDB security group to allow Charter Reporter access
 resource "aws_security_group_rule" "mariadb_from_charter_reporter" {
-  count                   = var.enable_db_access ? 1 : 0
-  type                    = "ingress"
-  from_port               = 3306
-  to_port                 = 3306
-  protocol                = "tcp"
-  security_group_id       = data.aws_security_group.mariadb[0].id
   source_security_group_id = aws_security_group.charter_reporter_web.id
-  description             = "Allow Charter Reporter app access to MariaDB"
 }
 
 # IAM Instance Profile for the EC2 instance
@@ -147,9 +134,6 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_agent_server_policy" {
 
 # Custom policy for Parameter Store access
 resource "aws_iam_role_policy" "parameter_store_access" {
-  count = var.enable_parameter_store ? 1 : 0
-  name  = "charter-reporter-parameter-store-access"
-  role  = aws_iam_role.charter_reporter_ec2.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -164,19 +148,6 @@ resource "aws_iam_role_policy" "parameter_store_access" {
         Resource = [
           "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/charter-reporter/*"
         ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "artifacts_bucket_access" {
-  count = var.enable_artifacts_bucket ? 1 : 0
-  name  = "charter-reporter-artifacts-access"
-  role  = aws_iam_role.charter_reporter_ec2.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
       {
         Sid    = "ReadArtifacts"
         Effect = "Allow"
@@ -184,7 +155,6 @@ resource "aws_iam_role_policy" "artifacts_bucket_access" {
           "s3:GetObject"
         ]
         Resource = [
-          "${aws_s3_bucket.artifacts[0].arn}/*"
         ]
       }
     ]
@@ -214,16 +184,12 @@ resource "random_password" "bucket_suffix" {
 }
 
 resource "aws_s3_bucket_versioning" "artifacts" {
-  count  = var.enable_artifacts_bucket ? 1 : 0
-  bucket = aws_s3_bucket.artifacts[0].id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
-  count  = var.enable_artifacts_bucket ? 1 : 0
-  bucket = aws_s3_bucket.artifacts[0].id
 
   rule {
     id     = "DeleteOldArtifacts"
@@ -240,8 +206,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
 }
 
 resource "aws_s3_bucket_public_access_block" "artifacts" {
-  count  = var.enable_artifacts_bucket ? 1 : 0
-  bucket = aws_s3_bucket.artifacts[0].id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -267,15 +231,9 @@ data "aws_ami" "amazon_linux_2023" {
 
 # User data script for initial setup
 locals {
-  user_data_full = base64encode(templatefile("${path.module}/user-data.sh", {
     aws_region          = var.aws_region
     domain_name         = var.domain_name
     admin_email         = var.admin_email
-    s3_artifacts_bucket = var.enable_artifacts_bucket ? aws_s3_bucket.artifacts[0].bucket : ""
-  }))
-
-  user_data_min = base64encode(templatefile("${path.module}/user-data-minimal.sh", {
-    aws_region = var.aws_region
   }))
 
   user_data = var.minimal_deploy ? local.user_data_min : local.user_data_full

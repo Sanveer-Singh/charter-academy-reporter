@@ -21,9 +21,9 @@ bash /tmp/dotnet-install.sh --channel 8.0 --install-dir /usr/share/dotnet --runt
 ln -sf /usr/share/dotnet/dotnet /usr/bin/dotnet
 
 if [ "${domain_name}" != "" ]; then
-  echo "Installing and configuring Nginx..."
-  dnf install -y nginx
-  systemctl enable nginx
+echo "Installing and configuring Nginx..."
+dnf install -y nginx
+systemctl enable nginx
 fi
 
 # Install required utilities
@@ -31,15 +31,15 @@ echo "Installing required utilities (unzip, sqlite, awscli)..."
 dnf install -y unzip sqlite awscli
 
 if [ "${domain_name}" != "" ]; then
-  echo "Installing Certbot..."
-  dnf install -y python3-certbot-nginx
+echo "Installing Certbot..."
+dnf install -y python3-certbot-nginx
 fi
 
 if [ -f /etc/amazon-cloudwatch-agent ]; then
   :
 fi
 if [ "${domain_name}" != "" ]; then
-  echo "Installing CloudWatch Agent..."
+echo "Installing CloudWatch Agent..."
   dnf install -y amazon-cloudwatch-agent || true
 fi
 
@@ -52,8 +52,8 @@ chown -R ec2-user:ec2-user /var/www/charter-reporter /var/app/keys /var/log/char
 
 # Create Nginx configuration (only when domain provided)
 if [ "${domain_name}" != "" ]; then
-  echo "Configuring Nginx..."
-  cat > /etc/nginx/conf.d/charter-reporter.conf << 'NGINX_EOF'
+echo "Configuring Nginx..."
+cat > /etc/nginx/conf.d/charter-reporter.conf << 'NGINX_EOF'
 # Rate limiting zones
 limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
 limit_req_zone $binary_remote_addr zone=auth:10m rate=3r/m;
@@ -138,8 +138,8 @@ PROXY_EOF
 
 # Test Nginx configuration and start
 if [ "${domain_name}" != "" ]; then
-  nginx -t
-  systemctl start nginx
+nginx -t
+systemctl start nginx
 fi
 
 # Create systemd service for the Charter Reporter app
@@ -170,8 +170,8 @@ systemctl daemon-reload
 systemctl enable charter-reporter
 
 if [ -d /opt/aws/amazon-cloudwatch-agent ]; then
-  echo "Configuring CloudWatch Agent..."
-  cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'CW_EOF'
+echo "Configuring CloudWatch Agent..."
+cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'CW_EOF'
 {
   "logs": {
     "logs_collected": {
@@ -234,8 +234,8 @@ if [ -d /opt/aws/amazon-cloudwatch-agent ]; then
 CW_EOF
 
 # Start CloudWatch Agent
-  /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-    -a start -m ec2 \
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a start -m ec2 \
     -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json || true
 fi
 
@@ -395,8 +395,8 @@ systemctl start dnf-automatic.timer
 
 # Wait for Let's Encrypt after DNS is configured
 if [ "${domain_name}" != "" ]; then
-  echo "Creating SSL setup script for manual execution after DNS configuration..."
-  cat > /usr/local/bin/setup-ssl.sh << 'SSL_EOF'
+echo "Creating SSL setup script for manual execution after DNS configuration..."
+cat > /usr/local/bin/setup-ssl.sh << 'SSL_EOF'
 #!/bin/bash
 # Run this script after DNS points to this server
 # Usage: sudo /usr/local/bin/setup-ssl.sh
@@ -420,7 +420,8 @@ certbot renew --dry-run
 echo "SSL setup completed successfully"
 echo "Your site should now be available at https://${domain_name}"
 SSL_EOF
-  chmod +x /usr/local/bin/setup-ssl.sh
+
+chmod +x /usr/local/bin/setup-ssl.sh
 fi
 
 # Create validation script
@@ -476,10 +477,10 @@ chmod +x /usr/local/bin/deployment-validation.sh
 echo "=== Charter Reporter Bootstrap Completed: $(date) ==="
 echo "Next steps:"
 if [ "${domain_name}" != "" ]; then
-  echo "1. Configure DNS to point to this server's Elastic IP"
-  echo "2. Run: sudo /usr/local/bin/setup-ssl.sh"
-  echo "3. Deploy the application using the CI/CD pipeline"
-  echo "4. Run: sudo /usr/local/bin/deployment-validation.sh"
+echo "1. Configure DNS to point to this server's Elastic IP"
+echo "2. Run: sudo /usr/local/bin/setup-ssl.sh"
+echo "3. Deploy the application using the CI/CD pipeline"
+echo "4. Run: sudo /usr/local/bin/deployment-validation.sh"
 else
   echo "Minimal mode: listening on http://<EIP>:5000 via Kestrel"
 fi

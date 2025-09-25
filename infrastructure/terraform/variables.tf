@@ -61,13 +61,13 @@ variable "key_pair_name" {
 variable "domain_name" {
   description = "Domain name for the application (e.g., reporter.charteracademy.co.za)"
   type        = string
-  default     = ""
+  # Example: reporter.charteracademy.co.za
 }
 
 variable "admin_email" {
   description = "Administrator email address for SSL certificates and notifications"
   type        = string
-  default     = ""
+  # Example: admin@charteracademy.co.za
 }
 
 variable "create_route53_zone" {

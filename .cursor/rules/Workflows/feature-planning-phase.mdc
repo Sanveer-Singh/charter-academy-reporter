@@ -1,0 +1,48 @@
+---
+name: Feature Planning Phase
+appliesTo:
+  - "**/*.cs"
+  - "**/*.cshtml"
+  - "**/*.md"
+  - "**/*.json"
+triggers:
+  keywords: ["planning phase", "plan feature", "acceptance criteria", "task breakdown", "test plan"]
+order: 13
+---
+# FEATURE PLANNING PHASE
+
+Purpose: Convert analysis into an implementation plan with tests-first thinking, atomic tasks, constraints, and risk management.
+
+## Inputs
+- Feature Analysis Doc (from Analysis Phase)
+- Requirements: @README.md
+- Rules: @Rules/MASTER-CURSORRULES.mdc (conflict hierarchy, performance, security, server-side-first)
+- Templates: @Templates/test-templates.mdc, @Templates/service-templates.mdc, @Templates/controller-templates.mdc, @Templates/repository-templates.mdc, @Templates/view-templates.mdc
+
+## Tests-First Setup
+- Identify valuable unit tests (Application services) and integration tests (Controller RBAC/happy-path) from acceptance criteria.
+- Define test cases (no code yet): name, purpose, inputs, expected outputs, policies, edge cases, cancellation behavior.
+ - Include export redaction tests if exporting is in scope; include role policy tests.
+
+## Atomic Task Breakdown
+- Split the feature into minimal, outcome-driven tasks across layers while respecting the implementation order.
+- For each task, write a no-code plan including:
+  - Objective and acceptance link
+  - Architectural/security/UI/UX/accessibility constraints to honor (server-side-first; policy-based auth; anti-forgery; CSP nonces; POPI redaction; WCAG)
+  - Data contracts (DTOs/ViewModels), filters, pagination
+  - Policy and export/redaction considerations
+  - Reuse plan (which services/repos/components/templates)
+  - Telemetry/audit implications
+  - Performance requirements (timeouts, cancellation, pagination, query budgets)
+
+## Full Feature Implementation Plan
+- Aggregate per-task plans into a single ordered plan: Database → Entities → Repository → Service → ViewModels → Controller → Views → Tests.
+- Include risk mitigations, roll-back strategy for each critical step, and explicit out-of-scope notes to prevent scope creep.
+
+## Scope & Risk Management
+- Validate against Analysis Doc; remove non-essential work; document dependencies and sequencing.
+ - Apply conflict hierarchy: Security first; block tasks that violate security until resolved.
+
+## State Update
+- Update workflow state: phase=Planning, status=completed, next=Implementation, feature=<name>.
+

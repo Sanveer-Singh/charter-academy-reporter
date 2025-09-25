@@ -1,0 +1,115 @@
+---
+name: Controller Rules
+appliesTo:
+  - "**/Controllers/**/*.cs"
+  - "**/*Controller.cs"
+triggers:
+  keywords: ["controller", "action", "authorize", "rbac", "modelstate"]
+order: 20
+---
+# CONTROLLER CONTEXT RULES
+
+## When working in @Controllers/*
+
+### IMMUTABLE CONTROLLER RULES
+- MUST inherit from BaseController
+- MUST use [Authorize] attribute with specific roles
+- MUST validate ModelState before processing
+- MUST use async/await for all actions
+- MUST return appropriate HTTP status codes
+- MUST log significant actions and errors
+- MUST use ViewModels, never Entities
+
+### CONTROLLER PATTERNS
+USE: @Rules/MASTER-CURSORRULES.md → T2 Controller Action Pattern
+FOLLOW: @Rules/Templates/controller-templates.md → POST/GET patterns
+KEEP: Domain-specific constraints and anti-patterns in this file
+
+### DEPENDENCY INJECTION
+FOLLOW: @Rules/Templates/controller-templates.md → DI pattern
+
+### ERROR HANDLING
+```csharp
+// Global exception handler in Program.cs
+app.UseExceptionHandler("/Error");
+
+// Local exception handling
+try
+{
+    // Action logic
+}
+catch (BusinessException ex)
+{
+    // Known business errors
+    ModelState.AddModelError("", ex.Message);
+    return View(model);
+}
+catch (Exception ex)
+{
+    // Unexpected errors
+    _logger.LogError(ex, "Unexpected error in {Controller}.{Action}", 
+        ControllerContext.ActionDescriptor.ControllerName,
+        ControllerContext.ActionDescriptor.ActionName);
+    throw; // Let global handler manage
+}
+```
+
+### AJAX/API PATTERNS
+```csharp
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> GetChartData([FromBody] ChartRequestDto request)
+{
+    if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+    
+    var result = await _service.GetChartDataAsync(request);
+    
+    if (!result.IsSuccess)
+        return BadRequest(new { error = result.ErrorMessage });
+    
+    return Ok(result.Data);
+}
+```
+
+### COMMON ANTI-PATTERNS TO AVOID
+```csharp
+// ❌ BAD: Direct database access
+var users = await _context.Users.ToListAsync();
+
+// ✅ GOOD: Use service layer
+var result = await _userService.GetUsersAsync();
+
+// ❌ BAD: Exposing entities
+return View(users);
+
+// ✅ GOOD: Use ViewModels
+var viewModel = _mapper.Map<UserListViewModel>(result.Data);
+return View(viewModel);
+
+// ❌ BAD: Synchronous operations
+var data = _service.GetData();
+
+// ✅ GOOD: Async all the way
+var data = await _service.GetDataAsync();
+
+// ❌ BAD: No error handling
+return View(await _service.GetDataAsync());
+
+// ✅ GOOD: Proper error handling
+var result = await _service.GetDataAsync();
+if (!result.IsSuccess)
+{
+    SetErrorMessage(result.ErrorMessage);
+    return View(new EmptyViewModel());
+}
+return View(result.Data);
+```
+
+### TESTING CONSIDERATIONS
+- Controllers should be thin - test business logic in services
+- Use integration tests for controller actions
+- Mock service dependencies in unit tests
+- Test authorization attributes work correctly
+- Verify ModelState validation
+

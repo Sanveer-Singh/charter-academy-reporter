@@ -11,8 +11,7 @@ resource "aws_sns_topic" "charter_reporter_alerts" {
 }
 
 resource "aws_sns_topic_subscription" "email_alerts" {
-  count     = var.enable_monitoring && var.alert_email != "" ? 1 : 0
-  topic_arn = aws_sns_topic.charter_reporter_alerts[0].arn
+  topic_arn = aws_sns_topic.charter_reporter_alerts.arn
   protocol  = "email"
   endpoint  = var.alert_email
 }
@@ -70,7 +69,7 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
   statistic           = "Average"
   threshold           = "80"
   alarm_description   = "This metric monitors ec2 cpu utilization"
-  alarm_actions       = [aws_sns_topic.charter_reporter_alerts[0].arn]
+  alarm_actions       = [aws_sns_topic.charter_reporter_alerts.arn]
 
   dimensions = {
     InstanceId = aws_instance.charter_reporter.id
@@ -92,7 +91,7 @@ resource "aws_cloudwatch_metric_alarm" "high_memory" {
   statistic           = "Average"
   threshold           = "85"
   alarm_description   = "This metric monitors memory utilization"
-  alarm_actions       = [aws_sns_topic.charter_reporter_alerts[0].arn]
+  alarm_actions       = [aws_sns_topic.charter_reporter_alerts.arn]
 
   dimensions = {
     InstanceId = aws_instance.charter_reporter.id
@@ -114,7 +113,7 @@ resource "aws_cloudwatch_metric_alarm" "disk_space" {
   statistic           = "Maximum"
   threshold           = "85"
   alarm_description   = "This metric monitors disk space utilization"
-  alarm_actions       = [aws_sns_topic.charter_reporter_alerts[0].arn]
+  alarm_actions       = [aws_sns_topic.charter_reporter_alerts.arn]
 
   dimensions = {
     InstanceId = aws_instance.charter_reporter.id
@@ -139,7 +138,7 @@ resource "aws_cloudwatch_metric_alarm" "instance_status_check" {
   statistic           = "Maximum"
   threshold           = "0"
   alarm_description   = "This metric monitors instance status check"
-  alarm_actions       = [aws_sns_topic.charter_reporter_alerts[0].arn]
+  alarm_actions       = [aws_sns_topic.charter_reporter_alerts.arn]
 
   dimensions = {
     InstanceId = aws_instance.charter_reporter.id
@@ -154,7 +153,7 @@ resource "aws_cloudwatch_metric_alarm" "instance_status_check" {
 resource "aws_backup_vault" "charter_reporter" {
   count       = var.enable_monitoring ? 1 : 0
   name        = "charter-reporter-vault"
-  kms_key_arn = aws_kms_key.backup[0].arn
+  kms_key_arn = aws_kms_key.backup.arn
 
   tags = {
     Name = "charter-reporter-backup-vault"
@@ -173,7 +172,7 @@ resource "aws_kms_key" "backup" {
 resource "aws_kms_alias" "backup" {
   count        = var.enable_monitoring ? 1 : 0
   name          = "alias/charter-reporter-backup"
-  target_key_id = aws_kms_key.backup[0].key_id
+  target_key_id = aws_kms_key.backup.key_id
 }
 
 # IAM role for AWS Backup
@@ -200,8 +199,7 @@ resource "aws_iam_role" "backup" {
 }
 
 resource "aws_iam_role_policy_attachment" "backup_policy" {
-  count      = var.enable_monitoring ? 1 : 0
-  role       = aws_iam_role.backup[0].name
+  role       = aws_iam_role.backup.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
 }
 
@@ -212,7 +210,7 @@ resource "aws_backup_plan" "charter_reporter" {
 
   rule {
     rule_name         = "daily_backups"
-    target_vault_name = aws_backup_vault.charter_reporter[0].name
+    target_vault_name = aws_backup_vault.charter_reporter.name
     schedule          = "cron(0 2 ? * * *)" # 2 AM CAT (0 AM UTC)
 
     lifecycle {
@@ -233,10 +231,9 @@ resource "aws_backup_plan" "charter_reporter" {
 
 # Backup Selection
 resource "aws_backup_selection" "charter_reporter" {
-  count        = var.enable_monitoring ? 1 : 0
-  iam_role_arn = aws_iam_role.backup[0].arn
+  iam_role_arn = aws_iam_role.backup.arn
   name         = "charter-reporter-backup-selection"
-  plan_id      = aws_backup_plan.charter_reporter[0].id
+  plan_id      = aws_backup_plan.charter_reporter.id
 
   resources = [
     aws_instance.charter_reporter.arn
@@ -314,16 +311,14 @@ resource "aws_cloudwatch_event_rule" "instance_state_change" {
 }
 
 resource "aws_cloudwatch_event_target" "sns" {
-  count     = var.enable_monitoring ? 1 : 0
-  rule      = aws_cloudwatch_event_rule.instance_state_change[0].name
+  rule      = aws_cloudwatch_event_rule.instance_state_change.name
   target_id = "SendToSNS"
-  arn       = aws_sns_topic.charter_reporter_alerts[0].arn
+  arn       = aws_sns_topic.charter_reporter_alerts.arn
 }
 
 # Allow EventBridge to publish to SNS
 resource "aws_sns_topic_policy" "charter_reporter_alerts" {
-  count = var.enable_monitoring ? 1 : 0
-  arn   = aws_sns_topic.charter_reporter_alerts[0].arn
+  arn = aws_sns_topic.charter_reporter_alerts.arn
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -334,7 +329,7 @@ resource "aws_sns_topic_policy" "charter_reporter_alerts" {
           Service = "events.amazonaws.com"
         }
         Action   = "SNS:Publish"
-        Resource = aws_sns_topic.charter_reporter_alerts[0].arn
+        Resource = aws_sns_topic.charter_reporter_alerts.arn
       }
     ]
   })

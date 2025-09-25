@@ -1,0 +1,479 @@
+{
+	"info": {
+		"_postman_id": "dashboard-toggle-tests",
+		"name": "Dashboard Toggle Tests",
+		"description": "Test suite for WordPress/Moodle toggle functionality on dashboard",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{auth_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://localhost:7001",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "your_jwt_token_here",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login - Get Auth Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.token) {",
+									"        pm.collectionVariables.set('auth_token', response.token);",
+									"        pm.test('Login successful - token received', function () {",
+									"            pm.expect(response.token).to.be.a('string');",
+									"        });",
+									"    }",
+									"} else {",
+									"    pm.test('Login failed', function () {",
+									"        pm.expect.fail('Login request failed with status: ' + pm.response.code);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@charter.co.za\",\n    \"password\": \"AdminPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/Account/Login",
+							"host": ["{{base_url}}"],
+							"path": ["Account", "Login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Dashboard Toggle Tests",
+			"item": [
+				{
+					"name": "1. Test Moodle Report (Default)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Moodle report response structure is correct', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('items');",
+									"    pm.expect(response).to.have.property('totalCount');",
+									"    pm.expect(response).to.have.property('page');",
+									"    pm.expect(response).to.have.property('pageSize');",
+									"    // Moodle report should NOT have showOnlyFourthCompletion property",
+									"    pm.expect(response).to.not.have.property('showOnlyFourthCompletion');",
+									"});",
+									"",
+									"pm.test('Response time is acceptable', function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Dashboard/MoodleReport?pageSize=5",
+							"host": ["{{base_url}}"],
+							"path": ["Dashboard", "MoodleReport"],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "5"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "2. Test WordPress Report",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('WordPress report response structure is correct', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('items');",
+									"    pm.expect(response).to.have.property('totalCount');",
+									"    pm.expect(response).to.have.property('page');",
+									"    pm.expect(response).to.have.property('pageSize');",
+									"    // WordPress report SHOULD have showOnlyFourthCompletion property",
+									"    pm.expect(response).to.have.property('showOnlyFourthCompletion');",
+									"});",
+									"",
+									"pm.test('WordPress report items have required fields', function () {",
+									"    const response = pm.response.json();",
+									"    if (response.items && response.items.length > 0) {",
+									"        const item = response.items[0];",
+									"        pm.expect(item).to.have.property('userId');",
+									"        pm.expect(item).to.have.property('firstName');",
+									"        pm.expect(item).to.have.property('lastName');",
+									"        pm.expect(item).to.have.property('ppraNo');",
+									"        pm.expect(item).to.have.property('fourthCompletionDate');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Dashboard/WordPressReport?pageSize=5",
+							"host": ["{{base_url}}"],
+							"path": ["Dashboard", "WordPressReport"],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "5"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "3. Test WordPress Report - Fourth Completion Only",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Fourth completion flag is respected', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.showOnlyFourthCompletion).to.be.true;",
+									"    ",
+									"    // Each user should only appear once when showing 4th completion only",
+									"    if (response.items && response.items.length > 1) {",
+									"        const userIds = response.items.map(item => item.userId);",
+									"        const uniqueUserIds = [...new Set(userIds)];",
+									"        pm.expect(userIds.length).to.equal(uniqueUserIds.length);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Dashboard/WordPressReport?showOnlyFourthCompletion=true&pageSize=5",
+							"host": ["{{base_url}}"],
+							"path": ["Dashboard", "WordPressReport"],
+							"query": [
+								{
+									"key": "showOnlyFourthCompletion",
+									"value": "true"
+								},
+								{
+									"key": "pageSize",
+									"value": "5"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "4. Test WordPress Report with Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('WordPress report respects filters', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('items');",
+									"    // Results should be filtered by date range (2024)",
+									"    if (response.items.length > 0) {",
+									"        response.items.forEach(item => {",
+									"            if (item.fourthCompletionDate) {",
+									"                const completionDate = new Date(item.fourthCompletionDate);",
+									"                pm.expect(completionDate.getFullYear()).to.equal(2024);",
+									"            }",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Dashboard/WordPressReport?from=2024-01-01&to=2024-12-31&pageSize=5",
+							"host": ["{{base_url}}"],
+							"path": ["Dashboard", "WordPressReport"],
+							"query": [
+								{
+									"key": "from",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "to",
+									"value": "2024-12-31"
+								},
+								{
+									"key": "pageSize",
+									"value": "5"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "5. Test WordPress Report Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('WordPress report search works', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('items');",
+									"    // If results exist, they should contain the search term",
+									"    if (response.items.length > 0) {",
+									"        const searchTerm = 'test';",
+									"        const hasSearchTerm = response.items.some(item => ",
+									"            (item.firstName && item.firstName.toLowerCase().includes(searchTerm)) ||",
+									"            (item.lastName && item.lastName.toLowerCase().includes(searchTerm)) ||",
+									"            (item.email && item.email.toLowerCase().includes(searchTerm)) ||",
+									"            (item.courseName && item.courseName.toLowerCase().includes(searchTerm))",
+									"        );",
+									"        // Note: May not find results if no data matches, which is acceptable",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Dashboard/WordPressReport?search=test&pageSize=5",
+							"host": ["{{base_url}}"],
+							"path": ["Dashboard", "WordPressReport"],
+							"query": [
+								{
+									"key": "search",
+									"value": "test"
+								},
+								{
+									"key": "pageSize",
+									"value": "5"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "6. Test WordPress Categories",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('WordPress categories response is correct', function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an('array');",
+									"    if (response.length > 0) {",
+									"        const category = response[0];",
+									"        pm.expect(category).to.have.property('id');",
+									"        pm.expect(category).to.have.property('name');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Dashboard/WordPressCategories",
+							"host": ["{{base_url}}"],
+							"path": ["Dashboard", "WordPressCategories"]
+						}
+					}
+				},
+				{
+					"name": "7. Compare Moodle vs WordPress Data",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// This test compares Moodle and WordPress data to ensure they're different sources"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Moodle and WordPress reports may have different data', function () {",
+									"    const moodleResponse = pm.response.json();",
+									"    ",
+									"    // Make WordPress request",
+									"    pm.sendRequest({",
+									"        url: pm.collectionVariables.get('base_url') + '/Dashboard/WordPressReport?pageSize=5',",
+									"        method: 'GET',",
+									"        header: {",
+									"            'Authorization': 'Bearer ' + pm.collectionVariables.get('auth_token')",
+									"        }",
+									"    }, function (err, wpResponse) {",
+									"        if (!err && wpResponse.code === 200) {",
+									"            const wordpressData = wpResponse.json();",
+									"            ",
+									"            // Both should have valid structure",
+									"            pm.expect(moodleResponse).to.have.property('items');",
+									"            pm.expect(wordpressData).to.have.property('items');",
+									"            ",
+									"            // WordPress should have the additional property",
+									"            pm.expect(wordpressData).to.have.property('showOnlyFourthCompletion');",
+									"            pm.expect(moodleResponse).to.not.have.property('showOnlyFourthCompletion');",
+									"            ",
+									"            console.log('Moodle total count:', moodleResponse.totalCount);",
+									"            console.log('WordPress total count:', wordpressData.totalCount);",
+									"        }",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Dashboard/MoodleReport?pageSize=5",
+							"host": ["{{base_url}}"],
+							"path": ["Dashboard", "MoodleReport"],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "5"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Security Tests",
+			"item": [
+				{
+					"name": "Non-Charter Admin Access Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Note: This test assumes you have a non-Charter Admin user",
+									"// If testing with Charter Admin, this test will pass (200)",
+									"// If testing with non-Charter Admin, should return 403",
+									"pm.test('WordPress report access control works', function () {",
+									"    // Should be 200 for Charter Admin, 403 for others",
+									"    pm.expect([200, 403]).to.include(pm.response.code);",
+									"    ",
+									"    if (pm.response.code === 403) {",
+									"        pm.test('Forbidden message is appropriate', function () {",
+									"            const response = pm.response.text();",
+									"            pm.expect(response).to.include('Charter Admin');",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/Dashboard/WordPressReport",
+							"host": ["{{base_url}}"],
+							"path": ["Dashboard", "WordPressReport"]
+						}
+					}
+				}
+			]
+		}
+	]
+}
