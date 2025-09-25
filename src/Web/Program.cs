@@ -31,6 +31,14 @@ builder.Services.AddValidatorsFromAssemblyContaining<Charter.Reporter.Web.Valida
 
 // EF Core SQLite and Identity
 var connectionString = builder.Configuration.GetConnectionString("AppDb") ?? "Data Source=app.db";
+if (connectionString.Contains("app.db"))
+{
+    var fullPath = Path.Combine(builder.Environment.ContentRootPath, "app.db");
+    connectionString = $"Data Source={fullPath}";
+}
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(connectionString));
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
 builder.Services
